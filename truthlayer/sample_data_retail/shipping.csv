@@ -1,6 +1,0 @@
-shipment_id,recipient,ship_date,order_value,region
-S1,Jon Smith,2026-09-03,220,Northeast
-S2,Jonathan Smith,2026-09-19,200,Northeast
-S3,Maria Lopez,2026-09-10,180,West
-S4,Kenji Watanabe,2026-09-12,600,West
-S5,Tom Reed,2026-09-20,75,West

@@ -1,6 +1,0 @@
-customer_id,first_name,last_name,email,phone,region,tier
-C100,Jonathan,Smith,jsmith@example.com,212-555-0100,Northeast,Gold
-C101,Maria,Lopez,maria.lopez@example.com,415-555-0101,West,Standard
-C102,Kenji,Watanabe,kenji@example.com,206-555-0102,West,Gold
-C103,Ann,Brooks,ann.brooks@example.com,617-555-0103,NE,Std
-C104,Anne,Brooks,ann.brooks@example.com,617-555-0103,Northeast,Standard

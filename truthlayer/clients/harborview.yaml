@@ -1,0 +1,178 @@
+# ---------------------------------------------------------------------------
+# Harborview Care Group — client configuration for TruthLayer.
+#
+# Everything client-specific lives in this file: what the sources look like,
+# what an "entity" is, which system is authoritative for which field, and which
+# business rules apply. The engine (truthlayer/) contains no healthcare logic.
+# A new client = a new YAML file like this one.
+# ---------------------------------------------------------------------------
+client: Harborview Care Group
+
+entity:
+  type: employee
+  label: Employee
+  anchor_source: hr          # the system of record that decides who exists
+  key_field: employee_id
+  columns: [role, facility, license_expiration]   # shown in the source-of-truth table
+  # severity when a record can't be tied to anyone in the anchor source, by where it appears
+  orphan_severity: {payroll: critical, schedule: warning, licensing: info}
+
+# Reference vocabularies. Every spelling seen in the wild maps to one code.
+# Values not found here are flagged rather than guessed.
+reference:
+  facility:
+    BAYSIDE: [harborview bayside, bayside, bys, hv bayside, harborview-bayside, hbs]
+    RIVERDALE: [harborview riverdale, riverdale, rvd, hv riverdale, harborview-riverdale, hrd]
+  role:
+    RN: [rn, registered nurse, r.n., reg nurse, staff nurse, charge nurse]
+    LPN: [lpn, licensed practical nurse, lvn, licensed vocational nurse, l.p.n.]
+    CNA: [cna, certified nursing assistant, certified nursing asst, certified nurse aide, nurse aide, nursing assistant, c.n.a.]
+    ADMIN: [adm, admin, administrator, facility administrator]
+    DON: [don, director of nursing]
+
+# Each source: how to recognise its columns (synonyms make header drift survivable),
+# what type each field is, and how its rows attach to an entity.
+sources:
+  hr:
+    label: HR roster
+    format: csv
+    fields:
+      employee_id:        {type: id, required: true, synonyms: [emp id, employee number, emp_no, id, "employee #"]}
+      first_name:         {type: text, required: true, synonyms: [first, fname, given name]}
+      last_name:          {type: text, required: true, synonyms: [last, lname, surname, family name]}
+      job_title:          {type: code, ref: role, synonyms: [title, position, role, job]}
+      facility:           {type: code, ref: facility, synonyms: [site, location, facility name]}
+      phone:              {type: phone, synonyms: [phone number, mobile, cell, telephone]}
+      license_number:     {type: license, synonyms: [license, license no, "license #", cert number]}
+      license_expiration: {type: date, synonyms: [license exp, license expiry, license expiration date]}
+      hire_date:          {type: date, synonyms: [start date, date hired, doh]}
+    name: {first: first_name, last: last_name}
+    record_key: employee_id
+
+  payroll:
+    label: Payroll
+    format: csv
+    fields:
+      payroll_id:    {type: id, required: true, synonyms: [pay id, check id, record id]}
+      employee_name: {type: person_name, required: true, synonyms: [name, employee, worker]}
+      job_code:      {type: code, ref: role, synonyms: [job, role, position code]}
+      facility_code: {type: code, ref: facility, synonyms: [facility, site, location, cost center]}
+      period_start:  {type: date, required: true, synonyms: [start, pay period start, week start]}
+      period_end:    {type: date, required: true, synonyms: [end, pay period end, week end]}
+      hours_paid:    {type: number, required: true, min: 0, max: 80, synonyms: [hours, paid hours, total hours]}
+    name: {full: employee_name}
+    record_key: payroll_id
+    match: {by: name, hints: {role: job_code, facility: facility_code}}
+    duplicate_check: [employee_name, period_start, period_end, facility_code, hours_paid]
+
+  licensing:
+    label: Licensing service
+    format: csv
+    fields:
+      license_number:  {type: license, required: true, synonyms: [license, license no, "license #"]}
+      name_on_license: {type: person_name, required: true, synonyms: [name, licensee, holder]}
+      license_type:    {type: code, ref: role, synonyms: [type, credential, credential type]}
+      expiration_date: {type: date, required: true, synonyms: [expiration, expires, exp date]}
+      last_verified:   {type: date, synonyms: [verified, verification date, verified on]}
+    name: {full: name_on_license}
+    record_key: license_number
+    match: {by: key, field: license_number, entity_attribute: license_number, fallback: name, hints: {role: license_type}}
+
+  schedule:
+    label: Staff schedule
+    format: pdf
+    parser: weekly_grid        # connector: turns a printed weekly grid into one row per shift
+    fields:
+      staff_name: {type: person_name, required: true}
+      role:       {type: code, ref: role}
+      facility:   {type: code, ref: facility}
+      date:       {type: date, required: true}
+      shift:      {type: text}
+      hours:      {type: number, min: 0, max: 16}
+    name: {full: staff_name}
+    match: {by: name, hints: {role: role, facility: facility}}
+
+# Canonical attributes of an employee, which source fields feed them, and who wins.
+# A disagreement is ALWAYS surfaced, even when an authority exists.
+attributes:
+  name:               {from: {hr: _name, payroll: employee_name, licensing: name_on_license, schedule: staff_name}, authority: [hr], compare: person_name, category: Identity}
+  role:               {from: {hr: job_title, payroll: job_code, schedule: role, licensing: license_type}, authority: [hr], severity: critical, category: Credentials}
+  facility:           {from: {hr: facility, payroll: facility_code, schedule: facility}, authority: [hr], severity: warning, category: Staffing}
+  license_number:     {from: {hr: license_number, licensing: license_number}, authority: [licensing], severity: critical, category: Credentials}
+  license_expiration: {from: {hr: license_expiration, licensing: expiration_date}, authority: [licensing], severity: critical, category: Credentials}
+  license_verified:   {from: {licensing: last_verified}, authority: [licensing]}
+  phone:              {from: {hr: phone}, authority: [hr]}
+  hire_date:          {from: {hr: hire_date}, authority: [hr]}
+
+matching:
+  auto_accept: 0.92      # >= this: link automatically
+  review_floor: 0.75     # between floor and auto_accept: link provisionally + ask a human
+
+# Business rules, built from generic rule types in truthlayer/rules.py.
+rules:
+  - type: presence
+    id: missing_from_source
+    expect:
+      payroll:   {severity: warning, category: Staffing, when: {role: [RN, LPN, CNA, ADMIN, DON]}, message: "On the HR roster but has no payroll records"}
+      licensing: {severity: critical, category: Credentials, when: {role: [RN, LPN, CNA]}, message: "Licensed role but no record from the licensing service (unverified)"}
+      schedule:  {severity: info, category: Staffing, when: {role: [RN, LPN, CNA]}, message: "Clinical staff not on the posted schedule"}
+
+  - type: required_attribute
+    id: license_required
+    attribute: license_number
+    when: {role: [RN, LPN, CNA]}
+    severity: critical
+    message: "Role requires a license but none is on file"
+
+  - type: expiration
+    id: license_expiry
+    attribute: license_expiration
+    label: License
+    warn_days: 60
+    critical_days: 0
+
+  - type: staleness
+    id: verification_stale
+    attribute: license_verified
+    label: License verification
+    max_age_days: 180
+
+  - type: activity_after_expiry
+    id: worked_after_expiry
+    attribute: license_expiration
+    activity:
+      schedule: {date: date, label: "scheduled shift"}   # rows with 0 hours (OFF) are ignored
+      payroll:  {date: period_end, label: "paid period"}
+    severity: critical
+
+  - type: aggregate_compare
+    id: paid_vs_scheduled
+    label: "Paid vs scheduled hours"
+    a: {source: payroll, measure: hours_paid, start: period_start, end: period_end, group: facility_code, verb: Paid}
+    b: {source: schedule, measure: hours, date: date, group: facility, verb: Scheduled}
+    coverage: every_day     # only compare pay periods the posted schedule fully covers
+    unit: " h"
+    tolerance: 0.5
+    when: {role: [RN, LPN, CNA]}     # only staff who appear on the clinical schedule
+    severity: warning
+
+  - type: date_order
+    id: payroll_period_order
+    source: payroll
+    start: period_start
+    end: period_end
+    expected_days: 7
+    severity: warning
+
+  - type: duplicate_entity
+    id: possible_duplicate_employee
+    match_on: [license_number, phone]
+    severity: warning
+
+# Business views built on top of the source of truth (see truthlayer/views.py).
+views:
+  staffing: {source: payroll, hours: hours_paid, start: period_start, end: period_end, group: [facility, role]}
+  credentials: {attribute_expiry: license_expiration, attribute_verified: license_verified, attribute_number: license_number}
+  # a shift is covered if a licensed nurse with no critical credential/identity issue is on it.
+  # A disagreement about a future expiry date is not, by itself, a reason to pull someone off a shift.
+  coverage: {source: schedule, date: date, shift: shift, required_any: [RN, LPN], not_blocking: [license_expiration]}

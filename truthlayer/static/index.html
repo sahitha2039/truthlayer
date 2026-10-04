@@ -1,0 +1,428 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TruthLayer</title>
+<style>
+:root{
+  --bg:#f6f7f9; --panel:#fff; --ink:#14181f; --muted:#5d6675; --line:#e3e6eb; --soft:#f0f2f5;
+  --accent:#2f5bea; --accent-soft:#e8eefe;
+  --crit:#c4302b; --crit-soft:#fdecec; --warn:#b26a00; --warn-soft:#fff4e0; --info:#4a5566; --info-soft:#eef0f3;
+  --ok:#1f7a4d; --ok-soft:#e5f5ec; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+}
+*{box-sizing:border-box}
+body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
+a{color:var(--accent);text-decoration:none}
+.app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
+nav{background:#10141b;color:#c9d1dd;padding:18px 12px;position:sticky;top:0;height:100vh}
+nav .brand{font-weight:700;color:#fff;font-size:17px;padding:0 10px 2px;letter-spacing:.2px}
+nav .client{font-size:12px;color:#8995a7;padding:0 10px 18px}
+nav a{display:flex;justify-content:space-between;align-items:center;color:#c9d1dd;padding:8px 10px;border-radius:7px;margin:1px 0}
+nav a:hover{background:#1b2230} nav a.on{background:#24304a;color:#fff}
+nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b778a;padding:14px 10px 4px}
+nav .pill{background:#c4302b;color:#fff;border-radius:10px;padding:0 7px;font-size:11px}
+main{padding:24px 28px;max-width:1280px;width:100%}
+h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 10px} h3{font-size:14px;margin:0 0 8px}
+.sub{color:var(--muted);margin-bottom:18px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.metric .v{font-size:28px;font-weight:650;letter-spacing:-.5px} .metric .l{color:var(--muted);font-size:12.5px}
+.metric .d{color:var(--muted);font-size:11.5px;margin-top:6px}
+table{width:100%;border-collapse:collapse;background:var(--panel)}
+th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--soft)}
+tr.click:hover td{background:#fafbff;cursor:pointer}
+.tbl{border:1px solid var(--line);border-radius:10px;overflow:auto}
+.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
+.critical,.b-expired,.b-CONFLICT,.b-gap{background:var(--crit-soft);color:var(--crit)}
+.warning,.b-expiring,.b-conflict,.b-at_risk,.b-unverified,.b-missing,.b-stale,.b-review{background:var(--warn-soft);color:var(--warn)}
+.info,.b-SINGLE_SOURCE,.b-empty,.b-MISSING{background:var(--info-soft);color:var(--info)}
+.b-CONFIRMED,.b-valid,.b-ok,.b-RESOLVED,.b-resolved,.b-auto,.b-anchor,.b-confirmed,.b-verified{background:var(--ok-soft);color:var(--ok)}
+.b-acknowledged,.b-dismissed{background:var(--info-soft);color:var(--info)}
+.b-open{background:var(--accent-soft);color:var(--accent)}
+.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 12px;font:inherit;cursor:pointer}
+.btn:hover{border-color:#b9c0cc} .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.small{padding:3px 9px;font-size:12.5px} .btn:disabled{opacity:.5;cursor:default}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.spacer{flex:1}
+input,select{font:inherit;border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:#fff}
+.muted{color:var(--muted)} .mono{font-family:var(--mono);font-size:12.5px}
+.issue{border:1px solid var(--line);border-left:4px solid var(--info);border-radius:8px;background:#fff;padding:12px 14px;margin-bottom:8px}
+.issue.sev-critical{border-left-color:var(--crit)} .issue.sev-warning{border-left-color:var(--warn)}
+.issue .t{font-weight:600} .issue .meta{font-size:12px;color:var(--muted);margin:2px 0 6px}
+.issue details{margin-top:6px} .issue summary{cursor:pointer;color:var(--muted);font-size:12.5px}
+.issue.closed{opacity:.65}
+.drop{border:2px dashed #c3cad6;border-radius:12px;padding:28px;text-align:center;background:#fbfcfe;color:var(--muted)}
+.drop.over{border-color:var(--accent);background:var(--accent-soft)}
+.attr{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}
+.attr .name{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
+.attr .val{font-size:16px;font-weight:600;margin:2px 0 6px}
+.lineage{display:grid;grid-template-columns:110px 18px 1fr;gap:3px 0;align-items:center;font-size:12.5px}
+.lineage .src{color:var(--muted);text-align:right;padding-right:6px}
+.lineage .wire{height:2px;background:#cfd5df}
+.lineage .wire.bad{background:var(--crit)}
+.lineage .v{padding:2px 8px;border-radius:6px;background:var(--soft);justify-self:start}
+.lineage .v.bad{background:var(--crit-soft);color:var(--crit)} .lineage .v.auth{outline:1.5px solid var(--accent)}
+.timeline{border-left:2px solid var(--line);margin-left:6px;padding-left:16px}
+.timeline .ev{position:relative;margin-bottom:10px}
+.timeline .ev:before{content:"";position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%;background:#c3cad6}
+.timeline .ev.decision:before{background:var(--accent)} .timeline .ev.issue_detected:before{background:var(--warn)}
+.timeline .ev.issue_cleared:before{background:var(--ok)}
+.cov{display:grid;gap:3px} .cov .c{border-radius:6px;padding:6px;font-size:11.5px;min-height:54px}
+.cov .h{font-size:11.5px;color:var(--muted);text-align:center;padding:4px}
+.cov .c.ok{background:var(--ok-soft)} .cov .c.gap{background:var(--crit-soft)} .cov .c.at_risk{background:var(--warn-soft)} .cov .c.empty{background:var(--soft)}
+.cov .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cov .p.blk{color:var(--crit);font-weight:600}
+.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--soft);color:var(--muted);margin-right:3px}
+.chip.on{background:var(--accent-soft);color:var(--accent)}
+pre{background:#0f1420;color:#d8e0ee;padding:14px;border-radius:10px;overflow:auto;font-size:12px;max-height:520px}
+.bar{height:8px;background:var(--soft);border-radius:4px;overflow:hidden} .bar>i{display:block;height:100%;background:var(--ok)}
+.toast{position:fixed;bottom:18px;right:18px;background:#10141b;color:#fff;padding:10px 14px;border-radius:8px;display:none;max-width:420px}
+.impact .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
+.impact .big{font-size:22px;font-weight:650;margin:4px 0}
+.empty-state{padding:40px;text-align:center;color:var(--muted)}
+@media (max-width:900px){.app{grid-template-columns:1fr} nav{position:static;height:auto} .g4,.g3{grid-template-columns:1fr 1fr} main{padding:16px}}
+</style>
+</head>
+<body>
+<div class="app">
+  <nav>
+    <div class="brand">TruthLayer</div>
+    <div class="client" id="client">…</div>
+    <a href="#/overview" data-r="overview">Overview</a>
+    <a href="#/ingest" data-r="ingest">Ingest</a>
+    <a href="#/entities" data-r="entities">Source of truth</a>
+    <a href="#/issues" data-r="issues">Review queue <span class="pill" id="navIssues"></span></a>
+    <div class="sec" id="bizsec">Business views</div>
+    <a href="#/staffing" data-r="staffing">Staffing report</a>
+    <a href="#/credentials" data-r="credentials">Credentials</a>
+    <a href="#/coverage" data-r="coverage">Referral readiness</a>
+    <div class="sec">System</div>
+    <a href="#/audit" data-r="audit">Audit log</a>
+    <a href="#/platform" data-r="platform">Platform config</a>
+  </nav>
+  <main id="main"></main>
+</div>
+<div class="toast" id="toast"></div>
+<script>
+const $ = s => document.querySelector(s);
+const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+const nice = v => { if (v == null || v === "") return "—"; const s = String(v); return /^[A-Z]{4,}$/.test(s) ? s[0] + s.slice(1).toLowerCase() : s; };
+const badge = (t, cls) => `<span class="badge ${cls || "b-" + t}">${esc(String(t).replace(/_/g, " "))}</span>`;
+const api = async (p, o = {}) => { const r = await fetch(p, o); if (!r.ok) throw new Error((await r.text()) || r.statusText); return r.json(); };
+const toast = m => { const t = $("#toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 3500); };
+let reviewer = ""; try { reviewer = localStorage.getItem("tl_reviewer") || ""; } catch (e) {}
+const SRC_SHORT = new Proxy({hr: "HR", payroll: "PAY", licensing: "LIC", schedule: "SCH"}, {get: (t, k) => t[k] || String(k).slice(0, 4).toUpperCase()});
+let CFG = null, SUMMARY = null;
+
+async function refreshSummary() {
+  SUMMARY = await api("/api/summary");
+  $("#client").textContent = SUMMARY.client;
+  const c = SUMMARY.by_severity.critical + SUMMARY.by_severity.warning;
+  $("#navIssues").textContent = c || ""; $("#navIssues").style.display = c ? "" : "none";
+  const map = {staffing: "staffing", credentials: "credentials", coverage: "coverage"};
+  document.querySelectorAll("nav a").forEach(a => { if (map[a.dataset.r]) a.style.display = SUMMARY.views.includes(map[a.dataset.r]) ? "" : "none"; });
+  $("#bizsec").style.display = SUMMARY.views.length ? "" : "none";
+}
+
+const routes = {};
+async function router() {
+  const [, r, arg] = location.hash.split("/");
+  const name = r || "overview";
+  document.querySelectorAll("nav a").forEach(a => a.classList.toggle("on", a.dataset.r === name));
+  try { await refreshSummary(); await (routes[name] || routes.overview)(decodeURIComponent(arg || "")); }
+  catch (e) { $("#main").innerHTML = `<div class="card">Error: ${esc(e.message)}</div>`; }
+}
+window.addEventListener("hashchange", router);
+
+// ------------------------------------------------------------------ overview
+routes.overview = async () => {
+  const s = SUMMARY;
+  if (!s.records) { $("#main").innerHTML = `<h1>Overview</h1><div class="card empty-state">No data yet. <a href="#/ingest">Ingest files</a> to build the source of truth.</div>`; return; }
+  const [staff, cred, cov, top] = await Promise.all([api("/api/views/staffing"), api("/api/views/credentials"), api("/api/views/coverage"), api("/api/issues?status=open")]);
+  const m = s.metrics;
+  const covFac = cov ? Object.entries(cov.facilities) : [];
+  $("#main").innerHTML = `
+  <div class="row"><div><h1>Overview</h1><div class="sub">What we know about ${esc(s.client)}, as of
+    <input type="date" id="asof" value="${s.as_of}" style="padding:2px 6px"></div></div></div>
+  <div class="grid g4">
+    ${metric(s.entities, s.entity_label + "s in source of truth", s.unverified_entities ? `+ ${s.unverified_entities} unverified found outside ${esc(s.anchor_label)}` : "all anchored to " + esc(s.anchor_label))}
+    ${metric(`${s.sources_loaded}/${s.sources_configured}`, "Sources loaded", Object.entries(s.records_by_source).map(([k, v]) => `${SRC_SHORT[k] || k} ${v}`).join(" · "))}
+    ${metric(s.open_issues, "Open issues", `<span style="color:var(--crit)">${s.by_severity.critical} critical</span> · ${s.by_severity.warning} warning · ${s.by_severity.info} info`)}
+    ${metric(s.resolved, "Decisions recorded", "kept across re-ingests")}
+  </div>
+  <h2>Trust metrics</h2>
+  <div class="grid g3">
+    ${pct(m.records_linked, "Records linked to a verified " + s.entity_label.toLowerCase(), "Rows from every file tied to someone in the " + esc(s.anchor_label) + ", automatically or by a reviewer.")}
+    ${pct(m.fields_agreeing, "Fields where sources agree", "Canonical attributes that are confirmed, single-source, or resolved by a human.")}
+    ${pct(m.entities_without_critical, s.entity_label + "s with no critical issue", "Everyone else has something a person must look at.")}
+  </div>
+  ${s.views.length ? `<h2>Business impact</h2>
+  <div class="grid g3">
+    <a class="card impact" href="#/coverage"><div class="k">Referrals</div>
+      <div class="big">${covFac.map(([f, d]) => `${nice(f)} ${d.ready}/${d.total}`).join(" · ") || "—"}</div>
+      <div class="muted">shifts with a licensed nurse whose record is clean. Answers "can we staff this patient?" in seconds instead of calls.</div></a>
+    <a class="card impact" href="#/staffing"><div class="k">State staffing report</div>
+      <div class="big">${staff ? staff.report_ready_pct + "% report-ready" : "—"}</div>
+      <div class="muted">${staff ? `${fmt(staff.total_flagged)} of ${fmt(staff.total_paid)} paid hours carry an open question. Fix those, export the rest.` : ""}</div></a>
+    <a class="card impact" href="#/credentials"><div class="k">Licenses & credentials</div>
+      <div class="big">${cred ? (cred.counts.expired || 0) + " expired · " + (cred.counts.expiring || 0) + " expiring" : "—"}</div>
+      <div class="muted">${cred ? `${(cred.counts.conflict || 0) + (cred.counts.unverified || 0) + (cred.counts.missing || 0)} more have conflicting or unverified records.` : ""}</div></a>
+  </div>` : ""}
+  <h2>Needs attention</h2>
+  ${top.filter(i => i.severity === "critical").slice(0, 8).map(issueCard).join("") || `<div class="card muted">No critical issues.</div>`}
+  ${top.filter(i => i.severity !== "critical").length ? `<a href="#/issues">See all ${top.length} open issues →</a>` : ""}`;
+  $("#asof").onchange = async e => { await api("/api/settings", {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify({as_of: e.target.value})}); toast("Re-evaluated as of " + e.target.value); router(); };
+  bindIssues();
+};
+const fmt = n => n == null ? "—" : (Math.round(n * 10) / 10).toLocaleString();
+const metric = (v, l, d) => `<div class="card metric"><div class="v">${v}</div><div class="l">${l}</div>${d ? `<div class="d">${d}</div>` : ""}</div>`;
+const pct = (v, l, d) => `<div class="card metric"><div class="v">${v == null ? "—" : v + "%"}</div><div class="l">${l}</div><div class="bar" style="margin-top:8px"><i style="width:${v || 0}%"></i></div><div class="d">${d}</div></div>`;
+
+// ------------------------------------------------------------------ ingest
+routes.ingest = async () => {
+  const files = await api("/api/files");
+  CFG = CFG || await api("/api/config");
+  const srcOpts = Object.entries(CFG.parsed.sources).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
+  $("#main").innerHTML = `
+  <h1>Ingest</h1><div class="sub">Drop the client's exports. Each file is matched to a source by its columns, stored raw, and never modified.</div>
+  <div class="drop" id="drop"><b>Drop CSV, XLSX or PDF files here</b><br>or <label class="btn small" style="margin-top:8px">choose files<input type="file" id="pick" multiple hidden></label>
+    <div style="margin-top:10px">Source: <select id="forced"><option value="">Auto-detect</option>${srcOpts}</select></div></div>
+  <div class="row" style="margin:14px 0">
+    <button class="btn primary" id="process">Process data</button>
+    <button class="btn" id="sample">Load sample data</button>
+    <span class="spacer"></span>
+    <button class="btn" id="reset">Reset everything</button>
+  </div>
+  <div id="result"></div>
+  <h2>Files</h2>
+  ${files.length ? `<div class="tbl"><table><tr><th>File</th><th>Detected as</th><th>Records</th><th>Column mapping</th><th>Received</th><th></th></tr>
+  ${files.map(f => `<tr style="${f.active ? "" : "opacity:.45"}"><td><b>${esc(f.filename)}</b>${f.active ? "" : "<br><span class='muted'>replaced</span>"}</td>
+    <td>${esc(f.label)}</td><td>${f.row_count}</td><td>${mappingNotes(f.notes)}</td><td class="muted">${esc(f.uploaded_at.replace("T", " "))}</td>
+    <td>${f.active ? `<button class="btn small" data-deact="${f.id}">Remove</button>` : ""}</td></tr>`).join("")}</table></div>` : `<div class="card muted">No files yet.</div>`}`;
+  const drop = $("#drop");
+  const send = async list => {
+    const fd = new FormData(); [...list].forEach(f => fd.append("files", f)); if ($("#forced").value) fd.append("source", $("#forced").value);
+    const res = await api("/api/files", {method: "POST", body: fd});
+    res.forEach(r => toast(r.ok ? `${r.filename} → ${r.label} (${r.records} records)` : `${r.filename}: ${r.error}`));
+    await routes.ingest(); $("#result").innerHTML = res.map(r => `<div class="card" style="margin-bottom:6px">${r.ok ? `✓ <b>${esc(r.filename)}</b> recognised as <b>${esc(r.label)}</b> — ${r.records} records` : `✗ <b>${esc(r.filename)}</b>: ${esc(r.error)}`}</div>`).join("");
+  };
+  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
+  drop.ondragleave = () => drop.classList.remove("over");
+  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); send(e.dataTransfer.files); };
+  $("#pick").onchange = e => send(e.target.files);
+  $("#process").onclick = async () => { const s = await api("/api/process", {method: "POST"}); showProcessed(s); };
+  $("#sample").onclick = async () => { const s = await api("/api/load-sample", {method: "POST"}); await routes.ingest(); showProcessed(s); };
+  $("#reset").onclick = async () => { if (!window.__resetArmed) { window.__resetArmed = true; $("#reset").textContent = "Click again to confirm"; return; } window.__resetArmed = false; await api("/api/reset", {method: "POST"}); toast("Cleared"); router(); };
+  document.querySelectorAll("[data-deact]").forEach(b => b.onclick = async () => { await api("/api/files/" + b.dataset.deact, {method: "DELETE"}); router(); });
+};
+function mappingNotes(n) {
+  if (n.pages) return n.pages.map(p => `Page ${p.page}: <b>${esc(nice((p.facility || "?").toUpperCase()))}</b>, ${p.staff_rows} staff × ${p.days} days${Object.keys(p.legend || {}).length ? `, legend ${Object.entries(p.legend).map(([k, v]) => k + "=" + v + "h").join(" ")}` : ", no legend"}`).join("<br>");
+  const parts = [];
+  const renamed = Object.entries(n.mapping || {}).filter(([f, h]) => f !== h);
+  parts.push(`${Object.keys(n.mapping || {}).length} fields mapped`);
+  if (renamed.length) parts.push("renamed: " + renamed.map(([f, h]) => `<span class="mono">${esc(h)}→${esc(f)}</span>`).join(", "));
+  if ((n.missing_fields || []).length) parts.push(`<span style="color:var(--warn)">missing: ${n.missing_fields.map(esc).join(", ")}</span>`);
+  if ((n.unmapped_columns || []).length) parts.push(`kept raw: ${n.unmapped_columns.map(esc).join(", ")}`);
+  return parts.join("<br>");
+}
+function showProcessed(s) {
+  $("#result").innerHTML = `<div class="card"><h3>Processed</h3><div class="grid g4">
+    ${metric(s.entities, s.entity_label.toLowerCase() + "s resolved", s.unverified_entities ? s.unverified_entities + " unverified found outside " + esc(s.anchor_label) : "")}
+    ${metric(s.records, "records ingested", s.metrics.records_linked + "% linked to verified " + s.entity_label.toLowerCase() + "s")}
+    ${metric(s.open_issues, "issues detected", `${s.by_severity.critical} critical · ${s.by_severity.warning} warning`)}
+    ${metric(s.metrics.fields_agreeing + "%", "fields agree across sources", "")}</div>
+    <div style="margin-top:10px"><a class="btn primary" href="#/issues">Open review queue →</a></div></div>`;
+  refreshSummary();
+}
+
+// ------------------------------------------------------------------ entities
+routes.entities = async (key) => {
+  if (key) return entityPage(key);
+  const ents = await api("/api/entities");
+  if (!ents.length) { $("#main").innerHTML = `<h1>Source of truth</h1><div class="card empty-state">Nothing ingested yet.</div>`; return; }
+  const srcs = Object.keys((CFG = CFG || await api("/api/config")).parsed.sources);
+  const COLS = CFG.parsed.entity.columns || Object.keys(CFG.parsed.attributes).filter(a => a !== "name").slice(0, 3);
+  const st = a => a && a.status === "CONFLICT" ? ` <span class="badge b-CONFLICT">conflict</span>` : a && a.status === "RESOLVED" ? ` <span class="badge b-RESOLVED">resolved</span>` : "";
+  $("#main").innerHTML = `<h1>Source of truth</h1><div class="sub">One row per real person, reconciled across every system. Click a row for its evidence.</div>
+  <div class="row" style="margin-bottom:10px"><input id="q" placeholder="Search name, ID, role, facility…" style="width:320px"><span class="spacer"></span><a class="btn small" href="/api/export/entities.csv">Export CSV</a></div>
+  <div class="tbl"><table id="et"><tr><th>${esc(SUMMARY.entity_label)}</th><th>Status</th>${COLS.map(c => `<th>${esc(c.replace(/_/g, " "))}</th>`).join("")}<th>Found in</th><th>Open issues</th></tr>
+  ${ents.map(e => `<tr class="click" data-k="${esc(e.key)}" data-s="${esc((e.display_name + " " + e.key + " " + Object.values(e.attrs).map(a => a.value || "").join(" ")).toLowerCase())}">
+    <td><b>${esc(e.display_name)}</b><br><span class="muted mono">${esc(e.key)}</span></td>
+    <td>${badge(e.status)}</td>
+    ${COLS.map(c => `<td>${esc(nice(e.attrs[c]?.value))}${st(e.attrs[c])}</td>`).join("")}
+    <td>${srcs.map(s => `<span class="chip ${e.sources[s] ? "on" : ""}" title="${s}">${SRC_SHORT[s] || s}</span>`).join("")}</td>
+    <td>${e.open_issues ? badge(e.open_issues + " open", e.worst) : `<span class="badge b-ok">clean</span>`}</td></tr>`).join("")}</table></div>`;
+  document.querySelectorAll("#et tr.click").forEach(tr => tr.onclick = () => location.hash = "#/entities/" + encodeURIComponent(tr.dataset.k));
+  $("#q").oninput = e => { const q = e.target.value.toLowerCase(); document.querySelectorAll("#et tr.click").forEach(tr => tr.style.display = tr.dataset.s.includes(q) ? "" : "none"); };
+};
+
+async function entityPage(key) {
+  const d = await api("/api/entities/" + encodeURIComponent(key));
+  const e = d.entity, L = d.labels;
+  const attrs = Object.entries(e.attrs);
+  $("#main").innerHTML = `
+  <a href="#/entities">← Source of truth</a>
+  <div class="row" style="margin:8px 0 4px"><h1>${esc(e.display_name)}</h1><span class="mono muted">${esc(e.key)}</span>${badge(e.status)}</div>
+  <div class="sub">${e.status === "verified" ? `Anchored to the ${esc(SUMMARY.anchor_label)}.` : `Not in the ${esc(SUMMARY.anchor_label)} — assembled from other systems by name.`} Every value below shows which system said what.</div>
+  <h2>Canonical record & lineage</h2>
+  <div class="grid g3">${attrs.map(([a, v]) => attrCard(a, v, L)).join("")}</div>
+  <h2>Issues</h2>
+  ${d.issues.map(issueCard).join("") || `<div class="card muted">No issues.</div>`}
+  <div class="grid g2" style="margin-top:8px">
+    <div><h2>Source records</h2>${recordsTable(d.records)}</div>
+    <div><h2>What changed</h2><div class="card"><div class="timeline">${d.timeline.map(t => `<div class="ev ${t.kind}"><div class="muted" style="font-size:11.5px">${esc(t.at.replace("T", " "))}</div>${esc(t.message)}</div>`).join("")}</div></div></div>
+  </div>`;
+  bindIssues();
+}
+function attrCard(a, v, L) {
+  const srcs = Object.entries(v.sources || {});
+  const lineage = srcs.map(([s, vals]) => vals.map(x => {
+    const bad = v.status === "CONFLICT" && x !== v.value || v.status === "RESOLVED" && x !== v.value;
+    return `<div class="src">${esc(L[s] || s)}</div><div class="wire ${bad ? "bad" : ""}"></div><div class="v ${bad ? "bad" : ""} ${s === v.authority ? "auth" : ""}">${esc(nice(x))}</div>`;
+  }).join("")).join("");
+  return `<div class="attr"><div class="row"><span class="name">${esc(a.replace(/_/g, " "))}</span><span class="spacer"></span>${badge(v.status)}</div>
+    <div class="val">${esc(nice(v.value))}</div>
+    ${lineage ? `<div class="lineage">${lineage}</div>` : `<div class="muted">No source provides this.</div>`}
+    ${v.authority ? `<div class="muted" style="font-size:11.5px;margin-top:6px">Authority: ${esc(L[v.authority] || v.authority)} (outlined)</div>` : ""}
+    ${v.note ? `<div style="font-size:12px;margin-top:4px">${esc(v.note)}</div>` : ""}</div>`;
+}
+function recordsTable(recs) {
+  return `<div class="tbl"><table><tr><th>Source</th><th>Where</th><th>Linked by</th></tr>${recs.slice(0, 40).map(r => `<tr>
+    <td>${esc(r.label)}<details><summary class="muted">raw</summary><pre style="max-height:200px">${esc(JSON.stringify(r.raw, null, 1))}</pre></details></td>
+    <td class="muted">${esc(r.filename)}<br>${esc(r.locator)}</td>
+    <td>${badge(r.match_status)}<br><span class="muted" style="font-size:12px">${esc(r.match_method || "")}${r.match_score != null && r.match_status !== "anchor" ? " · " + Math.round(r.match_score * 100) + "%" : ""}</span></td></tr>`).join("")}</table></div>
+    ${recs.length > 40 ? `<div class="muted">+ ${recs.length - 40} more</div>` : ""}`;
+}
+
+// ------------------------------------------------------------------ issues
+let issueFilter = {status: "open", severity: "", category: ""};
+routes.issues = async () => {
+  const qs = new URLSearchParams(Object.fromEntries(Object.entries(issueFilter).filter(([, v]) => v)));
+  const list = await api("/api/issues?" + qs);
+  const cats = Object.keys(SUMMARY.by_category);
+  const sel = (k, opts) => `<select data-f="${k}">${opts.map(([v, l]) => `<option value="${v}" ${issueFilter[k] === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
+  $("#main").innerHTML = `<h1>Review queue</h1><div class="sub">Everything the system could not settle on its own. Decisions are recorded and survive re-ingestion; if the underlying data changes, the issue reopens.</div>
+  <div class="row" style="margin-bottom:12px">
+    ${sel("status", [["open", "Open"], ["", "All"], ["resolved", "Resolved"], ["acknowledged", "Acknowledged"], ["dismissed", "Dismissed"]])}
+    ${sel("severity", [["", "All severities"], ["critical", "Critical"], ["warning", "Warning"], ["info", "Info"]])}
+    ${sel("category", [["", "All categories"], ...cats.map(c => [c, c])])}
+    <span class="muted">${list.length} shown</span><span class="spacer"></span>
+    Reviewer <input id="rev" value="${esc(reviewer)}" placeholder="your name" style="width:140px">
+    <a class="btn small" href="/api/export/issues.csv">Export CSV</a></div>
+  ${list.map(issueCard).join("") || `<div class="card empty-state">Nothing here.</div>`}`;
+  document.querySelectorAll("[data-f]").forEach(s => s.onchange = () => { issueFilter[s.dataset.f] = s.value; routes.issues(); });
+  $("#rev").onchange = e => { reviewer = e.target.value; try { localStorage.setItem("tl_reviewer", reviewer); } catch (err) {} };
+  bindIssues();
+};
+function issueCard(i) {
+  const ev = i.data.evidence || [];
+  const open = i.status === "open";
+  const opts = i.data.options || [];
+  const btns = !open ? `<button class="btn small" data-act="reopen" data-id="${i.id}">Reopen</button>` :
+    i.rule === "conflict" ? opts.map(o => `<button class="btn small" data-act="choose" data-val="${esc(o)}" data-id="${i.id}">Use ${esc(nice(o))}</button>`).join("") + `<button class="btn small" data-act="acknowledge" data-id="${i.id}">Keep open, note it</button>` :
+    i.rule === "match" ? `<button class="btn small primary" data-act="confirm" data-id="${i.id}">Same person</button><button class="btn small" data-act="reject" data-id="${i.id}">Different person</button>` :
+    `<button class="btn small" data-act="acknowledge" data-id="${i.id}">Acknowledge</button><button class="btn small" data-act="dismiss" data-id="${i.id}">Not an issue</button>`;
+  return `<div class="issue sev-${i.severity} ${open ? "" : "closed"}">
+    <div class="row"><span class="t">${esc(i.title)}</span>${badge(i.severity, i.severity)}<span class="badge info">${esc(i.category)}</span>${open ? "" : badge(i.status)}<span class="spacer"></span>
+      ${i.entity_key ? `<a href="#/entities/${encodeURIComponent(i.entity_key)}">${esc(i.entity_name || i.entity_key)} →</a>` : ""}</div>
+    <div class="meta">first seen ${esc((i.first_seen || "").replace("T", " "))}${i.attribute ? " · field " + esc(i.attribute) : ""}</div>
+    <div>${esc(i.detail)}</div>
+    <div class="muted" style="margin-top:4px"><b>Recommended:</b> ${esc(i.action)}</div>
+    ${ev.length ? `<details><summary>Evidence (${ev.length} record${ev.length > 1 ? "s" : ""})</summary><div class="tbl" style="margin-top:6px"><table>
+      <tr><th>Source</th><th>File / location</th><th>Value as received</th><th>Normalized</th></tr>
+      ${ev.map(x => `<tr><td>${esc(x.label || x.source)}</td><td class="muted">${esc(x.file || "")} ${esc(x.locator || "")}</td>
+      <td class="mono">${esc(typeof x.raw === "object" ? Object.entries(x.raw).map(([k, v]) => k + "=" + v).join("  ") : x.raw)}</td><td class="mono">${esc(x.value ?? "")}</td></tr>`).join("")}</table></div></details>` : ""}
+    <div class="row" style="margin-top:10px">${btns}<input placeholder="note (optional)" data-note="${i.id}" style="flex:1;min-width:160px;max-width:340px;padding:3px 8px"></div></div>`;
+}
+function bindIssues() {
+  document.querySelectorAll("[data-act]").forEach(b => b.onclick = async () => {
+    const note = (document.querySelector(`[data-note="${b.dataset.id}"]`) || {}).value || null;
+    b.disabled = true;
+    try {
+      await api(`/api/issues/${b.dataset.id}/resolve`, {method: "POST", headers: {"Content-Type": "application/json"},
+        body: JSON.stringify({decision: b.dataset.act, value: b.dataset.val || null, note, reviewer: reviewer || null})});
+      toast("Decision recorded"); router();
+    } catch (e) { toast(e.message); b.disabled = false; }
+  });
+}
+
+// ------------------------------------------------------------------ staffing
+routes.staffing = async () => {
+  const s = await api("/api/views/staffing");
+  if (!s || !s.rows.length) { $("#main").innerHTML = `<h1>Staffing report</h1><div class="card empty-state">Load payroll to build this report.</div>`; return; }
+  $("#main").innerHTML = `<h1>Staffing report</h1>
+  <div class="sub">Paid hours by week, facility and role (role from the source of truth, not the payroll job code), checked against the posted schedule. This is the input to the quarterly state staffing submission; flagged hours are the ones someone must confirm first.</div>
+  <div class="grid g3">${metric(fmt(s.total_paid), "Paid hours")}${metric(fmt(s.total_flagged), "Hours with an open question")}${pct(s.report_ready_pct, "Report-ready", "Share of paid hours with no open question attached.")}</div>
+  <div class="row" style="margin:14px 0 8px"><span class="spacer"></span><a class="btn small" href="/api/export/staffing.csv">Export report CSV</a></div>
+  <div class="tbl"><table><tr><th>Week</th><th>Facility</th><th>Role</th><th>Staff</th><th>Paid h</th><th>Scheduled h</th><th>Flagged h</th><th>Why flagged</th></tr>
+  ${s.rows.map(r => `<tr><td>${r.period_start.slice(5)} – ${r.period_end.slice(5)}</td><td>${esc(nice(r.facility))}</td><td>${esc(r.role)}</td><td>${r.headcount}</td>
+    <td><b>${fmt(r.paid_hours)}</b></td><td>${r.scheduled_hours == null ? `<span class="muted">no schedule</span>` : fmt(r.scheduled_hours) + (Math.abs(r.scheduled_hours - r.paid_hours) > .5 ? ` <span class="badge warning">${r.paid_hours - r.scheduled_hours > 0 ? "+" : ""}${fmt(r.paid_hours - r.scheduled_hours)}</span>` : "")}</td>
+    <td>${r.flagged_hours ? `<span class="badge warning">${fmt(r.flagged_hours)}</span>` : `<span class="badge b-ok">0</span>`}</td>
+    <td class="muted" style="font-size:12px">${r.reasons.map(esc).join("<br>")}</td></tr>`).join("")}</table></div>`;
+};
+
+// ------------------------------------------------------------------ credentials
+routes.credentials = async () => {
+  const c = await api("/api/views/credentials");
+  if (!c || !c.rows.length) { $("#main").innerHTML = `<h1>Credentials</h1><div class="card empty-state">No credential data yet.</div>`; return; }
+  const order = ["expired", "conflict", "missing", "unverified", "expiring", "stale", "valid"];
+  $("#main").innerHTML = `<h1>Credentials</h1><div class="sub">Every license, its authoritative expiration (licensing service), and what each system claims. As of ${c.as_of}; "expiring" means within ${c.warn_days} days.</div>
+  <div class="row" style="margin-bottom:12px">${order.filter(o => c.counts[o]).map(o => `${badge(c.counts[o] + " " + o, "b-" + o)}`).join(" ")}</div>
+  <div class="tbl"><table><tr><th>Person</th><th>Status</th><th>License</th><th>Expires</th><th>What each system says</th><th>Last verified</th><th>Open issues</th></tr>
+  ${c.rows.map(r => `<tr class="click" onclick="location.hash='#/entities/${encodeURIComponent(r.entity_key)}'">
+    <td><b>${esc(r.name)}</b><br><span class="muted">${esc(r.role || "")} · ${esc(nice(r.facility))}</span>${r.entity_status !== "verified" ? "<br>" + badge("not in HR", "warning") : ""}</td>
+    <td>${badge(r.status)}</td><td class="mono">${esc(r.license_number || "—")}</td>
+    <td>${esc(r.expiration || "—")}<br><span class="muted">${r.days_left == null ? "" : r.days_left < 0 ? -r.days_left + " days ago" : "in " + r.days_left + " days"}</span></td>
+    <td style="font-size:12px">${Object.entries(r.expiration_sources || {}).map(([s, v]) => `${SRC_SHORT[s] || s}: ${v.join(", ")}`).join("<br>")}</td>
+    <td>${esc(r.last_verified || "never")}${r.verified_age != null ? `<br><span class="muted">${r.verified_age} days ago</span>` : ""}</td>
+    <td style="font-size:12px">${r.issues.map(esc).join("<br>")}</td></tr>`).join("")}</table></div>`;
+};
+
+// ------------------------------------------------------------------ coverage / referrals
+routes.coverage = async () => {
+  const c = await api("/api/views/coverage");
+  if (!c || !Object.keys(c.facilities).length) { $("#main").innerHTML = `<h1>Referral readiness</h1><div class="card empty-state">Load a schedule to see coverage.</div>`; return; }
+  const dates = c.dates;
+  $("#main").innerHTML = `<h1>Referral readiness</h1>
+  <div class="sub">When a hospital calls, the first question is "do we have the licensed staff to take this patient?". This grid answers it from trusted data:
+  a shift counts only if a ${c.required_any.join(" or ")} is on it <i>and</i> their record has no critical credential or identity problem.</div>
+  <div class="row" style="margin-bottom:12px">${badge("covered", "b-ok")} ${badge("nurse on shift but record has a critical issue", "b-at_risk")} ${badge("staff on, no licensed nurse", "b-gap")} ${badge("nobody scheduled", "b-empty")}</div>
+  ${Object.entries(c.facilities).map(([f, d]) => `<div class="card" style="margin-bottom:14px"><div class="row"><h3>${esc(nice(f))}</h3><span class="spacer"></span><b>${d.ready}/${d.total}</b>&nbsp;<span class="muted">shifts covered</span></div>
+    <div class="cov" style="grid-template-columns:70px repeat(${dates.length},minmax(0,1fr))">
+      <div></div>${dates.map(x => `<div class="h">${new Date(x + "T12:00").toLocaleDateString(undefined, {weekday: "short"})} ${x.slice(5)}</div>`).join("")}
+      ${c.bands.map(b => `<div class="h" style="text-align:left">${b}</div>${dates.map(x => { const cell = d.cells.find(k => k.date === x && k.band === b);
+        return `<div class="c ${cell.status}" title="${esc(cell.staff.map(p => p.name + " (" + p.role + ")" + (p.blocked.length ? " — " + p.blocked.join("; ") : "")).join("\n"))}">
+        ${cell.staff.map(p => `<div class="p ${p.blocked.length || p.unverified ? "blk" : ""}">${esc(p.role || "?")} ${esc((p.name || "").split(" ")[0])}</div>`).join("") || `<span class="muted">—</span>`}</div>`; }).join("")}`).join("")}
+    </div></div>`).join("")}`;
+};
+
+// ------------------------------------------------------------------ audit
+routes.audit = async () => {
+  const ev = await api("/api/events?limit=300");
+  $("#main").innerHTML = `<h1>Audit log</h1><div class="sub">Append-only record of what was ingested, what was detected, and who decided what.</div>
+  <div class="card"><div class="timeline">${ev.map(t => `<div class="ev ${t.kind}"><div class="muted" style="font-size:11.5px">${esc(t.at.replace("T", " "))} · ${esc(t.kind.replace(/_/g, " "))}${t.entity_key ? ` · <a href="#/entities/${encodeURIComponent(t.entity_key)}">${esc(t.entity_key)}</a>` : ""}</div>${esc(t.message)}</div>`).join("") || "Nothing yet."}</div></div>`;
+};
+
+// ------------------------------------------------------------------ platform
+routes.platform = async () => {
+  CFG = await api("/api/config");
+  const p = CFG.parsed;
+  $("#main").innerHTML = `<h1>Platform config</h1>
+  <div class="sub">The engine is generic. Everything specific to ${esc(p.client)} is this one file (<span class="mono">${esc(CFG.file)}</span>). A new client in a different industry is a new file, not new code.</div>
+  <div class="grid g2">
+    <div class="card"><h3>Entity</h3><b>${esc(p.entity.label)}</b>, anchored to <b>${esc(p.sources[p.entity.anchor_source].label)}</b> by <span class="mono">${esc(p.entity.key_field)}</span>.
+      <h3 style="margin-top:14px">Sources</h3>${Object.entries(p.sources).map(([k, s]) => `<div style="margin-bottom:6px"><b>${esc(s.label)}</b> <span class="muted">(${s.format}${s.parser ? ", " + s.parser : ""})</span><br><span class="mono muted">${Object.keys(s.fields).join(", ")}</span>
+      <br><span style="font-size:12px">${k === p.entity.anchor_source ? "system of record" : s.match ? "linked by " + (s.match.by === "key" ? s.match.field + ", then name" : "name + " + Object.keys(s.match.hints || {}).join(", ")) : ""}</span></div>`).join("")}</div>
+    <div class="card"><h3>Who is authoritative for what</h3><div class="tbl"><table><tr><th>Attribute</th><th>Sources</th><th>Authority</th><th>On conflict</th></tr>
+      ${Object.entries(p.attributes).map(([a, s]) => `<tr><td>${esc(a)}</td><td>${Object.keys(s.from).map(k => SRC_SHORT[k] || k).join(", ")}</td><td><b>${(s.authority || []).map(k => SRC_SHORT[k] || k).join(" › ")}</b></td><td>${s.severity ? badge(s.severity, s.severity) : badge("warning", "warning")}</td></tr>`).join("")}</table></div>
+      <h3 style="margin-top:14px">Rules</h3>${p.rules.map(r => `<div><span class="mono">${esc(r.type)}</span> · ${esc(r.id)}</div>`).join("")}</div>
+  </div>
+  <h2>The file</h2><pre>${esc(CFG.yaml)}</pre>`;
+};
+
+router();
+</script>
+</body>
+</html>

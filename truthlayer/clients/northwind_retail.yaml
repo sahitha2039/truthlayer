@@ -1,0 +1,90 @@
+# A second, unrelated client: a specialty retailer. Same engine, no code changes.
+client: Northwind Outfitters (retail demo)
+
+entity:
+  type: customer
+  label: Customer
+  anchor_source: crm
+  key_field: customer_id
+  orphan_severity: {billing: critical, shipping: warning}
+
+reference:
+  region:
+    NORTHEAST: [northeast, ne, north east, new england]
+    WEST: [west, w, west coast, pacific]
+  tier:
+    GOLD: [gold, g, premium]
+    STANDARD: [standard, std, regular, basic]
+
+sources:
+  crm:
+    label: CRM
+    format: csv
+    fields:
+      customer_id: {type: id, required: true, synonyms: [cust id, account id, id]}
+      first_name:  {type: text, required: true, synonyms: [first]}
+      last_name:   {type: text, required: true, synonyms: [last, surname]}
+      email:       {type: text, synonyms: [email address, e-mail]}
+      phone:       {type: phone, synonyms: [phone number, mobile]}
+      region:      {type: code, ref: region, synonyms: [territory, sales region]}
+      tier:        {type: code, ref: tier, synonyms: [loyalty tier, level]}
+    name: {first: first_name, last: last_name}
+    record_key: customer_id
+
+  billing:
+    label: Billing (ERP)
+    format: csv
+    fields:
+      invoice_id:    {type: id, required: true, synonyms: [invoice, invoice no]}
+      customer_name: {type: person_name, required: true, synonyms: [bill to, customer]}
+      email:         {type: text, synonyms: [billing email]}
+      period_start:  {type: date, required: true}
+      period_end:    {type: date, required: true}
+      amount:        {type: number, required: true, min: 0, max: 50000, synonyms: [amount billed, total]}
+    name: {full: customer_name}
+    record_key: invoice_id
+    match: {by: name, hints: {}}
+    duplicate_check: [customer_name, period_start, period_end, amount]
+
+  shipping:
+    label: Shipping
+    format: csv
+    fields:
+      shipment_id: {type: id, required: true, synonyms: [tracking id, shipment]}
+      recipient:   {type: person_name, required: true, synonyms: [ship to, name]}
+      ship_date:   {type: date, required: true, synonyms: [shipped, date]}
+      order_value: {type: number, min: 0, synonyms: [value, order total]}
+      region:      {type: code, ref: region, synonyms: [zone]}
+    name: {full: recipient}
+    record_key: shipment_id
+    match: {by: name, hints: {region: region}}
+
+attributes:
+  name:   {from: {crm: _name, billing: customer_name, shipping: recipient}, authority: [crm], compare: person_name, category: Identity}
+  email:  {from: {crm: email, billing: email}, authority: [crm], severity: warning, category: Contact}
+  region: {from: {crm: region, shipping: region}, authority: [crm], severity: warning, category: Consistency}
+  phone:  {from: {crm: phone}, authority: [crm]}
+  tier:   {from: {crm: tier}, authority: [crm]}
+
+matching: {auto_accept: 0.92, review_floor: 0.75}
+
+rules:
+  - type: aggregate_compare
+    id: billed_vs_shipped
+    label: "Billed vs shipped value"
+    a: {source: billing, measure: amount, start: period_start, end: period_end, verb: Billed}
+    b: {source: shipping, measure: order_value, date: ship_date, verb: Shipped}
+    coverage: date_range    # shipments only exist on days something shipped
+    slack_days: 15
+    prefix: "$"
+    tolerance: 1
+    severity: warning
+    category: Revenue
+  - type: presence
+    id: never_billed
+    expect:
+      billing: {severity: info, category: Revenue, message: "Customer in CRM has never been billed"}
+  - type: duplicate_entity
+    id: duplicate_customer
+    match_on: [email, phone]
+    severity: warning

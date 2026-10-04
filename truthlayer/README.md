@@ -8,6 +8,9 @@ and puts anything it cannot settle in front of a human.
 First client: **Harborview Care Group** (HR roster, payroll, licensing, printed schedule PDF).
 Second client, to show it generalises: **Northwind Outfitters** (CRM, billing, shipping), with no code changes.
 
+**Full write-up:** [GUIDE.md](GUIDE.md) covers why it works, how it decides what to flag, the tech stack, data model,
+scaling, where AI fits, learned rules, security, roadmap and the pitch. Key design decisions are in [DECISIONS.md](DECISIONS.md).
+
 ## Run it
 
 ```bash

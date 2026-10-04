@@ -1,0 +1,5 @@
+invoice_id,customer_name,email,period_start,period_end,amount
+INV-1,"SMITH, JONATHON",jsmith@example.com,2026-09-01,2026-09-30,420.00
+INV-2,"LOPEZ, MARIA",mlopez@oldmail.com,2026-09-01,2026-09-30,180.00
+INV-3,"WATANABE, KENJI",kenji@example.com,2026-09-01,2026-09-30,990.00
+INV-4,"REED, TOM",tom@reed.co,2026-09-01,2026-09-30,75.00

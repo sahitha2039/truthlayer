@@ -6,7 +6,10 @@ None of these functions mention nurses, licenses or payroll; those words only ap
 from __future__ import annotations
 
 from collections import defaultdict
+import re
 from datetime import date, timedelta
+
+from .normalize import simplify
 
 
 def _d(v):
@@ -99,7 +102,7 @@ def activity_after_expiry(eng, rule):
             if a["status"] == "CONFLICT":
                 others = " Sources disagree on the expiration date: " + "; ".join(f"{eng.label(s)} {', '.join(v)}" for s, v in a["sources"].items()) + "."
             eng.add_issue(rule["id"], rule.get("severity", "critical"), rule.get("category", "Credentials"), e["key"], rule["attribute"],
-                          f"Active after credential expired ({exp})",
+                          rule.get("title", "Worked after the expiry date") + f" ({exp})",
                           f"{e['display']} has {len(hits)} {', '.join(sorted({h[1] for h in hits}))} record(s) after {exp}, starting {first}.{others}",
                           "Verify the credential immediately; this is a compliance exposure.",
                           [eng.ev(h[3]) for h in sorted(hits, key=lambda h: h[2])][:8], fp=(rule["id"], e["key"], exp, len(hits)))
@@ -152,17 +155,18 @@ def aggregate_compare(eng, rule):
             ev = [eng.ev(r) for r in a_recs] + [eng.ev(r) for r in b_recs if r["norm"].get(B["measure"])][:7]
             data = {"period": [s.isoformat(), t.isoformat()], "a": ta, "b": tb}
             av, bv, pre, u = A.get("verb", eng.label(A["source"])), B.get("verb", eng.label(B["source"])), rule.get("prefix", ""), rule.get("unit", "")
+            low = lambda w, spec: w.lower() if "verb" in spec else w      # verbs read as words; system names keep their case
             q = lambda n: f"{pre}{n:,.10g}{u}"
             if abs(ta - tb) > tol:
                 if not a_recs:
-                    title = f"{bv} {q(tb)} but not {av.lower()} ({per})"
+                    title = f"{bv} {q(tb)} but not {low(av, A)} ({per})" if "verb" in A else f"In {bv} ({q(tb)}) but not in {av} ({per})"
                 elif not b_recs:
-                    title = f"{av} {q(ta)} but not {bv.lower()} ({per})"
+                    title = f"{av} {q(ta)} but not {low(bv, B)} ({per})" if "verb" in B else f"In {av} ({q(ta)}) but not in {bv} ({per})"
                 else:
-                    title = f"{av} {q(ta)} vs {bv.lower()} {q(tb)} ({per})"
+                    title = f"{av} {q(ta)} vs {low(bv, B)} {q(tb)} ({per})"
                 eng.add_issue(rule["id"], rule.get("severity", "warning"), rule.get("category", "Staffing"), e["key"], None, title,
                               f"{eng.label(A['source'])}: {q(ta)} · {eng.label(B['source'])}: {q(tb)} · difference {ta - tb:+,.10g}{u} for {e['display']}.",
-                              "Confirm actual hours worked before they are reported.", ev, fp=(rule["id"], e["key"], s, ta, tb), data=data)
+                              rule.get("action", "Confirm which number is right before it is reported."), ev, fp=(rule["id"], e["key"], s, ta, tb), data=data)
             else:
                 ga = {k: v for k, v in a_by.items() if v}
                 gb = {k: v for k, v in b_by.items() if v}
@@ -210,7 +214,23 @@ def date_order(eng, rule):
                           fp=(rule["id"], r["id"], s, t))
 
 
-REGISTRY = {
+def unusual_value(eng, rule):
+    """A status-like field that isn't the normal value: SUSPENDED licence, Terminated employee, Closed account."""
+    expected = {simplify(x) for x in rule["expected"]}
+    crit = re.compile(rule["critical_pattern"], re.I) if rule.get("critical_pattern") else None
+    for e in eng.ents.values():
+        a = e["attrs"].get(rule["attribute"], {})
+        v = a.get("value")
+        if v and simplify(v) not in expected:
+            sev = "critical" if crit and crit.search(str(v)) else rule.get("severity", "warning")
+            eng.add_issue(rule["id"], sev, rule.get("category", "Status"), e["key"], rule["attribute"],
+                          f"{rule.get('label', rule['attribute'])} is {v}",
+                          f"{e['display']}'s {rule.get('label', rule['attribute']).lower()} is '{v}'. Normally it's {', '.join(rule['expected'])}.",
+                          "Check whether they should still be active, and fix the record if not.", [], fp=(rule["id"], e["key"], v))
+
+
+REGISTRY = {"unusual_value": unusual_value,
+
     "presence": presence, "required_attribute": required_attribute, "expiration": expiration,
     "staleness": staleness, "activity_after_expiry": activity_after_expiry,
     "aggregate_compare": aggregate_compare, "duplicate_entity": duplicate_entity, "date_order": date_order,

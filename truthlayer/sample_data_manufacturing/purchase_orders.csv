@@ -1,0 +1,7 @@
+PO Number,Vendor,Order Date,Amount,Ship To
+PO-5001,ACME CORP,2026-09-02,12500,Plant A
+PO-5002,Brightline Metals,2026-09-05,8400,Plant B
+PO-5003,Kogane Precision Co,2026-09-10,22000,Plant A
+PO-5004,Kogane Precision Co,2026-09-18,3100,Plant A
+PO-5005,Orion Fabrication,2026-09-21,6700,Plant B
+PO-5006,Brightline Metals,2026-09-05,8400,Plant B

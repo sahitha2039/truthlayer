@@ -39,6 +39,9 @@ CREATE TABLE IF NOT EXISTS match_overrides (
 CREATE TABLE IF NOT EXISTS events (
   id INTEGER PRIMARY KEY, at TEXT, kind TEXT, entity_key TEXT, fingerprint TEXT, message TEXT);
 CREATE TABLE IF NOT EXISTS settings (key TEXT PRIMARY KEY, value TEXT);
+CREATE TABLE IF NOT EXISTS auto_rules (
+  id INTEGER PRIMARY KEY, pattern TEXT, condition_json TEXT, action TEXT, label TEXT,
+  created_by TEXT, created_at TEXT, from_issue TEXT, active INTEGER DEFAULT 1, applied INTEGER DEFAULT 0);
 CREATE INDEX IF NOT EXISTS ix_rec_entity ON records(entity_key);
 CREATE INDEX IF NOT EXISTS ix_ev_entity ON evidence(entity_key);
 CREATE INDEX IF NOT EXISTS ix_issue_entity ON issues(entity_key);
@@ -90,7 +93,7 @@ class Store:
 
     def reset(self):
         with self.lock:
-            for t in ("files", "records", "entities", "evidence", "issues", "decisions", "match_overrides", "events"):
+            for t in ("files", "records", "entities", "evidence", "issues", "decisions", "match_overrides", "events", "auto_rules"):
                 self.db.execute(f"DELETE FROM {t}")
             self.db.commit()
 

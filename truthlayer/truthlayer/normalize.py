@@ -182,6 +182,21 @@ def parse_name(full=None, first=None, last=None) -> dict | None:
     return p
 
 
+ORG_SUFFIXES = {"inc", "incorporated", "llc", "ltd", "limited", "corp", "corporation", "co", "company", "the", "gmbh",
+                "plc", "lp", "llp", "pllc", "sa", "ag", "pty", "group", "holdings", "ab", "oy", "as", "bv", "nv",
+                "srl", "spa", "kk", "sarl", "pte", "sas", "gmbh", "intl", "international"}
+
+
+def parse_org(raw) -> dict | None:
+    """'ACME Corp.' and 'Acme Corporation, Inc.' -> same key."""
+    if is_empty(raw):
+        return None
+    toks = [t for t in simplify(raw).split() if t not in ORG_SUFFIXES]
+    if not toks:
+        toks = simplify(raw).split()
+    return {"first": "", "middle": "", "last": " ".join(toks), "display": re.sub(r"\s+", " ", str(raw)).strip(), "org": True}
+
+
 def name_key(p: dict) -> str:
     """Grouping key that treats nicknames as equal (for clustering unmatched records)."""
     f = p["first"]
@@ -194,6 +209,14 @@ def name_key(p: dict) -> str:
 def name_similarity(a: dict, b: dict) -> tuple[float, str]:
     if not a or not b:
         return 0.0, "none"
+    if a.get("org") or b.get("org"):
+        la, lb = a["last"] or a.get("display", ""), b["last"] or b.get("display", "")
+        la, lb = simplify(la), simplify(lb)
+        if la == lb:
+            return 1.0, "same organisation name"
+        ta, tb = set(la.split()), set(lb.split())
+        jac = len(ta & tb) / max(1, len(ta | tb))
+        return round(max(jac, SequenceMatcher(None, la, lb).ratio()), 3), "similar organisation name"
     fa, fb, la, lb = a["first"], b["first"], a["last"], b["last"]
     if la == lb and fa == fb:
         return 1.0, "exact name"
@@ -225,6 +248,13 @@ def normalize_value(raw, spec: dict, refs: dict):
         return norm_license(raw)
     if t == "code":
         return norm_code(raw, refs[spec["ref"]])
+    if t == "email":
+        if is_empty(raw):
+            return None, None
+        e = str(raw).strip().lower()
+        return (e, None) if re.fullmatch(r"[^@\s]+@[^@\s]+\.[a-z]{2,}", e) else (e, f"'{raw}' is not a valid email address")
+    if t == "org_name":
+        return parse_org(raw), None
     if t == "person_name":
         p = parse_name(full=raw)
         return (p, None) if p or is_empty(raw) else (None, f"'{raw}' is not a usable name")

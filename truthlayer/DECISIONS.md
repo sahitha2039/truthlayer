@@ -81,6 +81,35 @@ answer. That matters for compliance data. AI fits in two places later, both boun
 1. Suggesting matches in the 0.75–0.92 band. It would only suggest; a human still confirms.
 2. A natural-language front end over the existing API. The database stays the authority.
 
+## 11. Any company, any industry: workspaces + guided setup
+- **One workspace per company.** Each has its own folder, database, setup and problem log. Nothing is shared, so
+  a mistake in one client can't leak into another. (In production this becomes a tenant id in Postgres.)
+- **The setup is inferred from the data, then confirmed by a person.** Column types come from values (dates,
+  amounts, emails, IDs like `RN-551203`, names written "LAST, FIRST", company names), not only from headers.
+  Links between files are found by measuring how many values actually overlap. Coded values are matched across
+  systems automatically (`BYS` ↔ "Harborview Bayside", `RN` ↔ "Registered Nurse"). The person sees every
+  guess in plain words and can change it before saving.
+- **No tables created from uploaded files.** Column names come from whoever exported the file, so building SQL
+  tables from them is fragile and unsafe. Storage keeps a fixed schema. Each client's data shape is stored as rows
+  (`sources`, `source_fields`), and read-only **views** (`file_billing`, `profiles`) give a table per file for
+  querying. Every identifier is checked against a strict pattern before it goes into SQL.
+- **PDFs work in the guided setup too.** A PDF with a table is read like a CSV. A printed schedule grid
+  (people down the side, days across the top, shift codes in the cells) is recognised and turned into one row per
+  person per day, with hours worked out from the shifts and the legend.
+- **Industry packs are optional.** Healthcare-only features (schedule PDF reader, staffing report, shift coverage)
+  switch on for Harborview. Every company gets the general views: files, to-do, profiles, things expiring,
+  totals that should match.
+- **Proof:** `tests/test_setup.py` gives the setup raw CSVs from three industries (healthcare, retail,
+  manufacturing), accepts every suggestion, and checks the planted problems are found. No config is written by hand.
+
+## 12. Learning from decisions (rules people approve)
+After someone marks an issue "Not a problem" or "Known, leave it", TruthLayer offers to turn that into a rule:
+"same kind of issue" (rule + field), optionally narrowed by an attribute of the entity ("when position is
+Dispatcher"). The offer shows how many other issues it would close. Rules live in `auto_rules`, are re-applied on
+every rebuild, and mark matching issues `auto` with the rule named on the issue. Guardrails: never applied to
+critical issues, every auto-resolution is logged, one click undoes it for a single issue (a `keep_open` decision),
+and any rule can be switched off in How it works. It is pattern matching on decisions people made, not AI.
+
 ## What we'd do next
 Incremental ingest instead of a full rebuild (fine at this scale), role-based review
 permissions, scheduled re-verification against licensing APIs, and push alerts for expiring

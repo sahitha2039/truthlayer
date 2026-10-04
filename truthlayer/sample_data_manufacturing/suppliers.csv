@@ -1,0 +1,7 @@
+Supplier ID,Company Name,Contact Email,Phone,Country,Category,Insurance Expiry
+S-100,Acme Corporation,orders@acme.com,312-555-0100,USA,Fasteners,2027-03-31
+S-101,Brightline Metals LLC,sales@brightline.io,412-555-0101,USA,Sheet metal,2026-10-20
+S-102,Kogane Precision Co.,info@kogane.jp,+1 646-555-0102,Japan,Machined parts,2026-08-31
+S-103,Nordic Polymers AB,hello@nordicpoly.se,646-555-0103,Sweden,Plastics,2027-06-30
+S-104,Delta Logistics Inc,ops@deltalog.com,773-555-0104,USA,Freight,2027-01-15
+S-105,Delta Logistics Incorporated,ops@deltalog.com,773-555-0104,USA,Freight,2027-01-15

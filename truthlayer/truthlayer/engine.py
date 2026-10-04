@@ -9,15 +9,29 @@ from __future__ import annotations
 
 import hashlib
 import json
+import re
 from collections import defaultdict
 from datetime import date
 
 from .ingest import ingest_file, shift_hours, OFF_CODES, LEAVE_CODES, _clean_shift
-from .normalize import build_ref, normalize_value, parse_name, name_similarity, name_key, is_empty
+from .normalize import build_ref, normalize_value, parse_name, name_similarity, name_key, is_empty, simplify
 from .store import Store, dumps, now
 from . import rules as rule_lib
 
 SEV_ORDER = {"critical": 0, "warning": 1, "info": 2}
+
+
+ACRONYMS = {"cdl", "dot", "hr", "hris", "eld", "id", "iso", "npi", "dea", "vin", "sku", "po", "crm", "erp", "rn", "lpn", "cna", "ein", "mvr"}
+WORD_FIX = {"exp": "expiration", "dob": "date of birth", "num": "number", "no": "number", "qty": "quantity", "amt": "amount"}
+
+
+def words_for(attr: str) -> str:
+    """license_exp_date -> 'license expiration date', cdl_class -> 'CDL class'."""
+    out = []
+    for w in attr.split("_"):
+        w = WORD_FIX.get(w, w)
+        out.append(w.upper() if w in ACRONYMS else w)
+    return " ".join(out)
 
 
 def pretty(v):
@@ -110,6 +124,8 @@ class Engine:
         decisions = {d["fingerprint"]: d for d in store.q("SELECT * FROM decisions WHERE active=1 ORDER BY id")}
         overrides = {(o["source"], o["name_key"]): o["entity_key"] for o in store.q("SELECT * FROM match_overrides")}
         self.decisions = decisions
+        self.auto_rules = [{**r, "cond": json.loads(r["condition_json"] or "null")}
+                           for r in store.q("SELECT * FROM auto_rules WHERE active=1 ORDER BY id")]
 
         rows = store.q("""SELECT r.id, r.source, r.locator, r.raw_json, f.filename FROM records r
                           JOIN files f ON f.id=r.file_id WHERE f.active=1 ORDER BY r.source, r.id""")
@@ -157,24 +173,41 @@ class Engine:
             if source == self.anchor or "match" not in scfg:
                 continue
             m = scfg["match"]
-            key_idx = None
-            if m.get("by") == "key":
-                anchor_field = cfg["attributes"][m["entity_attribute"]]["from"][self.anchor]
-                key_idx = defaultdict(set)
+            # keys to try, in order (several identifiers are allowed: license #, email, account #...)
+            keys = list(m.get("keys") or [])
+            if m.get("by") == "key" and m.get("field"):
+                keys.insert(0, {"field": m["field"], "entity_attribute": m["entity_attribute"]})
+            use_name = m.get("by") == "name" or m.get("fallback") == "name" or (not keys and m.get("by") != "key")
+            key_idxs = []
+            for kspec in keys:
+                ea = kspec["entity_attribute"]
+                anchor_field = (cfg["entity"]["key_field"] if ea == "__key__"
+                                else cfg["attributes"].get(ea, {}).get("from", {}).get(self.anchor, ea))
+                idx = defaultdict(set)
                 for e in ents.values():
                     for ar in e["records"][self.anchor]:
                         v = ar["norm"].get(anchor_field)
                         if v:
-                            key_idx[v].add(e["key"])
+                            idx[v].add(e["key"])
+                key_idxs.append((kspec["field"], idx))
+            key_idx = key_idxs or None
             review_groups = {}
             cache = {}
             for r in by_source.get(source, []):
                 nm = r["norm"].get("_name")
-                if key_idx is not None and r["norm"].get(m["field"]) in key_idx:
-                    cands = sorted(key_idx[r["norm"][m["field"]]])
+                hit = None
+                for field, idx in key_idxs:
+                    v = r["norm"].get(field)
+                    if v and v in idx:
+                        hit = (field, sorted(idx[v]))
+                        break
+                if hit:
+                    field, cands = hit
                     if len(cands) > 1 and nm:
                         cands.sort(key=lambda k: -name_similarity(nm, ents[k]["name"])[0])
-                    self.link(r, cands[0], f"{m['field']} match", 1.0, "auto")
+                    self.link(r, cands[0], f"{field.replace('_', ' ')} match", 1.0, "auto")
+                    continue
+                if not use_name:
                     continue
                 if not nm:
                     continue
@@ -208,10 +241,10 @@ class Engine:
                 top, second, nm = g["top"], g["second"], g["name"]
                 alt = f" Next best: {ents[second[1]]['name']['display']} ({second[0]:.0%})." if second and second[0] >= self.floor else ""
                 self.add_issue("match", "warning", "Identity", ek, None,
-                               f"Possible match: '{nm['display']}' in {self.label(source)}",
+                               f"Is '{nm['display']}' in {self.label(source)} the same {self.cfg['entity'].get('label', 'record').lower()}?",
                                f"'{nm['display']}' ({len(g['recs'])} record(s)) looks like {ents[ek]['name']['display']} ({ek}) "
                                f"by {top[2]}, {top[0]:.0%} similar. Linked provisionally; not trusted until confirmed.{alt}",
-                               "Confirm if this is the same person; reject to treat as a separate, unknown person.",
+                               "Confirm if they're the same; reject to treat them as separate.",
                                [self.ev(x) for x in g["recs"]][:6],
                                fp=("match", source, nk, ek), options=["confirm", "reject"],
                                data={"source": source, "name_key": nk, "candidate": ek})
@@ -220,21 +253,30 @@ class Engine:
         orphan_sev = cfg["entity"].get("orphan_severity", {})
         clusters = defaultdict(list)
         for r in recs:
-            if r["entity"] is None and r["norm"].get("_name") and r["source"] != self.anchor:
+            if r["entity"] is not None or r["source"] == self.anchor:
+                continue
+            if r["norm"].get("_name"):
                 clusters[name_key(r["norm"]["_name"])].append(r)
+            else:   # no name: group by the first identifier it carries, so it still shows up
+                m = cfg["sources"][r["source"]].get("match", {})
+                fields = [k["field"] for k in m.get("keys", [])] + ([m["field"]] if m.get("field") else [])
+                v = next((r["norm"].get(f) for f in fields if r["norm"].get(f)), None)
+                if v:
+                    r["norm"]["_name"] = {"first": "", "middle": "", "last": str(v), "display": str(v)}
+                    clusters[f"id|{v}"].append(r)
         for nk, rs in clusters.items():
             n0 = rs[0]["norm"]["_name"]
-            k = f"U-{n0['last']}-{n0['first']}" if n0["first"] else f"U-{n0['last']}"
+            k = re.sub(r"[^A-Za-z0-9-]+", "-", f"U-{n0['last']}-{n0['first']}" if n0["first"] else f"U-{n0['last']}").strip("-")
             ents[k] = {"key": k, "status": "unverified", "name": rs[0]["norm"]["_name"], "records": defaultdict(list)}
             for r in rs:
                 self.link(r, k, "name cluster (no system-of-record match)", None, "unverified")
             srcs = sorted({r["source"] for r in rs})
             sev = min((orphan_sev.get(s, "warning") for s in srcs), key=lambda s: SEV_ORDER[s])
             self.add_issue("not_in_anchor", sev, "Identity", k, None,
-                           f"{rs[0]['norm']['_name']['display']} is not on the {self.label(self.anchor)}",
+                           f"{rs[0]['norm']['_name']['display']}: not found in {self.label(self.anchor)}",
                            f"Appears in {', '.join(self.label(s) for s in srcs)} ({len(rs)} records) but matches no one in the "
-                           f"{self.label(self.anchor)}. Could be a new hire, agency staff, a typo, or a record that should not exist.",
-                           f"Add them to the {self.label(self.anchor)}, or link these records to an existing person.",
+                           f"{self.label(self.anchor)}. Could be new, a typo, or a record that shouldn't exist.",
+                           f"Add them to the {self.label(self.anchor)}, or fix the record so it matches an existing one.",
                            [self.ev(x) for x in rs][:8], fp=("orphan", nk, ",".join(srcs)))
 
         # 4. record-level problems -----------------------------------------
@@ -329,8 +371,8 @@ class Engine:
                         seen[sig].append(r)
                 for sig, rs in seen.items():
                     if len(rs) > 1:
-                        self.add_issue("duplicate_record", "critical", "Staffing", rs[0]["entity"], None,
-                                       f"{self.label(source)}: {len(rs)} identical rows for {rs[0]['norm']['_name']['display'] if rs[0]['norm'].get('_name') else sig[0]}",
+                        self.add_issue("duplicate_record", "critical", scfg.get("duplicate_category", "Duplicates"), rs[0]["entity"], None,
+                                       scfg.get("duplicate_title", "Possible duplicate entry") + f" ({len(rs)} identical rows in {self.label(source)})",
                                        f"Rows match on {', '.join(fields)} but have different record IDs ({', '.join(str(x['key']) for x in rs)}). Possible double payment.",
                                        "Confirm with payroll whether this was paid twice.", [self.ev(x) for x in rs], fp=("duprec", source) + sig)
 
@@ -381,14 +423,15 @@ class Engine:
         parts = " · ".join(f"{self.label(s)}: {', '.join(pretty(x) for x in per_source[s])}" for s in per_source)
         n_disagree = sum(1 for s in per_source if auth_val not in per_source[s])
         note = ""
+        words = attr.replace("_", " ")
         if authority:
-            note = f" {self.label(authority)} is configured as authoritative for {attr}, so {pretty(auth_val)} is shown provisionally."
+            note = f" We trust {self.label(authority)} for {words}, so we're using {pretty(auth_val)} until you decide."
             if n_disagree > len(per_source) / 2:
-                note += f" Note: most sources ({n_disagree} of {len(per_source)}) disagree with it."
+                note += f" Heads up: {n_disagree} of {len(per_source)} systems disagree with it, so {self.label(authority)} may be the one that's out of date."
         self.add_issue("conflict", spec.get("severity", "warning"), spec.get("category", "Consistency"), e["key"], attr,
-                       f"{attr.replace('_', ' ').capitalize()} differs across systems",
+                       f"Systems disagree on {words_for(attr)}",
                        parts + "." + note,
-                       "Pick the correct value; the source systems that disagree should then be corrected.",
+                       "Pick the right value below, then fix it in the system that's wrong.",
                        [{"source": v["source"], "label": self.label(v["source"]), "record_id": v["record_id"], "field": attr,
                          "raw": v["raw"], "value": v["value"]} for v in vals][:10],
                        fp=fp, options=options)
@@ -404,6 +447,23 @@ class Engine:
     def attr(self, e, name):
         return e["attrs"].get(name, {}).get("value")
 
+    # ------------------------------------------------------------ rules learned from decisions
+    def auto_rule_for(self, i):
+        if i["severity"] == "critical":       # guardrail: urgent items always need a person
+            return None
+        key = pattern_key(i)
+        for r in self.auto_rules:
+            if r["pattern"] != key:
+                continue
+            c = r["cond"]
+            if c:
+                ent = self.ents.get(i["entity_key"])
+                v = ((ent or {}).get("attrs", {}).get(c["attr"], {}) or {}).get("value")
+                if v is None or simplify(str(v)) != simplify(str(c["value"])):
+                    continue
+            return r
+        return None
+
     # ------------------------------------------------------------ persistence
     def _persist(self):
         st = self.store
@@ -417,10 +477,20 @@ class Engine:
             db.execute("DELETE FROM entities")
             db.execute("DELETE FROM evidence")
             open_by_ent = defaultdict(list)
+            applied = defaultdict(int)
             for fp, i in self.issues.items():
                 d = self.decisions.get(fp)
                 status = {"choose": "resolved", "confirm": "resolved", "reject": "resolved",
                           "acknowledge": "acknowledged", "dismiss": "dismissed"}.get(d["decision"], "open") if d else "open"
+                if not d:      # no decision on this exact issue: does a rule learned from earlier decisions cover it?
+                    r = self.auto_rule_for(i)
+                    if r:
+                        status = "auto"
+                        i["data"]["auto_rule"] = {"id": r["id"], "label": r["label"], "action": r["action"]}
+                        applied[r["id"]] += 1
+                        if existing.get(fp, {}).get("status") != "auto":
+                            db.execute("INSERT INTO events(at, kind, entity_key, fingerprint, message) VALUES (?,?,?,?,?)",
+                                       (ts, "auto_resolved", i["entity_key"], fp, f"Auto-resolved by rule \"{r['label']}\": {i['title']}"))
                 i["status"] = status
                 if status == "open" and i["entity_key"]:
                     open_by_ent[i["entity_key"]].append(i["severity"])
@@ -445,6 +515,8 @@ class Engine:
                     db.execute("UPDATE issues SET active=0 WHERE fingerprint=?", (fp,))
                     db.execute("INSERT INTO events(at, kind, entity_key, fingerprint, message) VALUES (?,?,?,?,?)",
                                (ts, "issue_cleared", row["entity_key"], fp, f"No longer present in the data: {row['title']}"))
+            for r in self.auto_rules:
+                db.execute("UPDATE auto_rules SET applied=? WHERE id=?", (applied.get(r["id"], 0), r["id"]))
             for e in self.ents.values():
                 sevs = open_by_ent.get(e["key"], [])
                 worst = min(sevs, key=lambda s: SEV_ORDER[s]) if sevs else None
@@ -484,6 +556,8 @@ class Engine:
             "client": self.cfg["client"], "as_of": self.as_of().isoformat(),
             "entity_label": self.cfg["entity"].get("label", "Entity"), "anchor_label": self.label(self.anchor),
             "views": list(self.cfg.get("views", {}).keys()),
+            "generic_views": [v for v, t in (("expiring", "expiration"), ("totals", "aggregate_compare"))
+                              if any(r["type"] == t for r in self.cfg.get("rules", []))],
             "entities": len(verified), "unverified_entities": len(ents) - len(verified),
             "records": len(recs), "records_by_source": dict(by_source),
             "sources_loaded": len(by_source), "sources_configured": len(self.cfg["sources"]),
@@ -504,6 +578,62 @@ def source_is_grid(scfg):
 
 
 # ---------------------------------------------------------------- human decisions
+def pattern_key(i) -> str:
+    """Issues of the same kind: same check, same field (e.g. every 'Not found in CDL report')."""
+    return f"{i['rule']}|{i.get('attribute') or ''}"
+
+
+def generic_title(t: str) -> str:
+    t = re.sub(r"\(\d{1,2}/\d{1,2}[–-]\d{1,2}/\d{1,2}\)", "", t)
+    t = re.sub(r"\d[\d,.]*", "#", t)
+    return re.sub(r"\s+", " ", t).strip()
+
+
+def similar_options(eng, issue_id: int):
+    """What a rule made from this decision would cover: all issues of this kind, or only where a profile field matches."""
+    st = eng.store
+    i = st.one("SELECT * FROM issues WHERE id=?", (issue_id,))
+    if not i:
+        raise KeyError(issue_id)
+    if i["severity"] == "critical":
+        return {"allowed": False, "reason": "Urgent issues always need a person, so they can't be auto-resolved.", "options": []}
+    key = pattern_key(i)
+    ents = {e["key"]: json.loads(e["attrs_json"]) for e in st.q("SELECT key, attrs_json FROM entities")}
+    same = [x for x in st.q("SELECT * FROM issues WHERE active=1 AND severity!='critical'") if pattern_key(x) == key]
+    others = [x for x in same if x["id"] != i["id"] and x["status"] == "open"]
+    title = generic_title(i["title"])
+    opts = [{"condition": None, "label": f"Every \"{title}\" issue", "count": len(others)}]
+    mine = ents.get(i["entity_key"], {})
+    for attr, a in mine.items():
+        v = a.get("value")
+        if not v or attr == "name" or re.match(r"^\d{4}-\d{2}-\d{2}", str(v)):
+            continue      # dates make poor rule conditions
+        distinct = {str(e.get(attr, {}).get("value")) for e in ents.values() if e.get(attr, {}).get("value")}
+        if len(distinct) < 2 or len(distinct) > 12 or len(distinct) >= max(3, len(ents) * .6):
+            continue      # only fields that describe a group (role, facility, status), not IDs or dates
+        n = sum(1 for x in others if str(ents.get(x["entity_key"], {}).get(attr, {}).get("value")) == str(v))
+        opts.append({"condition": {"attr": attr, "value": v},
+                     "label": f"Only where {attr.replace('_', ' ')} is {v}", "count": n})
+    return {"allowed": True, "pattern": key, "title": title, "options": opts}
+
+
+def create_auto_rule(eng, issue_id: int, condition, action: str, reviewer=None):
+    st = eng.store
+    i = st.one("SELECT * FROM issues WHERE id=?", (issue_id,))
+    if not i:
+        raise KeyError(issue_id)
+    if i["severity"] == "critical":
+        raise ValueError("Urgent issues can't be auto-resolved")
+    if action not in ("dismiss", "acknowledge"):
+        raise ValueError("unknown action")
+    verb = "Not a problem" if action == "dismiss" else "Handled"
+    label = f"{verb}: {generic_title(i['title'])}" + (f" when {condition['attr'].replace('_', ' ')} is {condition['value']}" if condition else "")
+    st.x("INSERT INTO auto_rules(pattern, condition_json, action, label, created_by, created_at, from_issue, active) VALUES (?,?,?,?,?,?,?,1)",
+         (pattern_key(i), json.dumps(condition) if condition else None, action, label, reviewer, now(), i["fingerprint"]))
+    st.event("rule", f"{reviewer or 'Reviewer'} created a rule: {label}", i["entity_key"], i["fingerprint"])
+    return eng.process()
+
+
 def resolve_issue(eng: Engine, issue_id: int, decision: str, value=None, note=None, reviewer=None):
     st = eng.store
     i = st.one("SELECT * FROM issues WHERE id=?", (issue_id,))
@@ -513,6 +643,9 @@ def resolve_issue(eng: Engine, issue_id: int, decision: str, value=None, note=No
     fp = i["fingerprint"]
     if decision == "reopen":
         st.x("UPDATE decisions SET active=0 WHERE fingerprint=?", (fp,))
+        if i["status"] == "auto":    # undo an auto-resolution: this one stays open even though the rule matches
+            st.x("INSERT INTO decisions(fingerprint, decision, value, note, reviewer, decided_at, active) VALUES (?,?,?,?,?,?,1)",
+                 (fp, "keep_open", None, note, reviewer, now()))
         if i["rule"] == "match":
             st.x("DELETE FROM match_overrides WHERE source=? AND name_key=?", (data["source"], data["name_key"]))
         st.event("decision", f"Reopened: {i['title']}" + (f" — {note}" if note else ""), i["entity_key"], fp)

@@ -17,7 +17,36 @@ from .normalize import simplify, is_empty
 
 
 # ---------------------------------------------------------------- tabular
+def is_pdf(data: bytes, filename: str) -> bool:
+    return filename.lower().endswith(".pdf") or data[:4] == b"%PDF"
+
+
+def pdf_table_rows(data: bytes) -> list[list[str]]:
+    """Every table in the PDF, stitched together; a header repeated on later pages is dropped."""
+    import pdfplumber
+    rows = []
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        for page in pdf.pages:
+            tables = page.extract_tables() or page.extract_tables({"vertical_strategy": "text", "horizontal_strategy": "text"}) or []
+            for t in tables:
+                for r in t:
+                    cells = [re.sub(r"\s+", " ", c or "").strip() for c in r]
+                    if any(cells):
+                        rows.append(cells)
+            if not tables:   # no table lines at all: split text lines on runs of 2+ spaces
+                for line in (page.extract_text(layout=True) or "").splitlines():
+                    cells = [c.strip() for c in re.split(r"\s{2,}", line.strip()) if c.strip()]
+                    if len(cells) >= 2:
+                        rows.append(cells)
+    if rows:
+        head = rows[0]
+        rows = [head] + [r for r in rows[1:] if r != head]
+    return rows
+
+
 def read_table(data: bytes, filename: str) -> list[list[str]]:
+    if is_pdf(data, filename):
+        return pdf_table_rows(data)
     if filename.lower().endswith((".xlsx", ".xlsm")):
         import openpyxl
         wb = openpyxl.load_workbook(io.BytesIO(data), read_only=True, data_only=True)
@@ -62,6 +91,11 @@ def map_headers(headers: list[str], fields: dict) -> tuple[dict, list[str], floa
                     s = 1.0 if h in aliases else 0.0
                 else:
                     s = max(SequenceMatcher(None, h, a).ratio() for a in aliases)
+                    ht = set(h.split()) - {"the", "of", "id", "no", "number"}
+                    for a in aliases:      # "Amount Billed" ~ amount, "Customer" ~ customer name
+                        at = set(a.split()) - {"the", "of", "id", "no", "number"}
+                        if ht and at and (ht <= at or at <= ht):
+                            s = max(s, .86)
                 if s > bscore:
                     best, bscore = i, s
             if best is not None and (bscore == 1.0 if exact else bscore >= 0.82):
@@ -77,7 +111,7 @@ def map_headers(headers: list[str], fields: dict) -> tuple[dict, list[str], floa
 
 def detect_tabular(rows: list[list[str]], filename: str, cfg: dict, forced: str | None):
     """Find the header row and the best-matching source."""
-    candidates = {k: v for k, v in cfg["sources"].items() if v.get("format", "csv") != "pdf"}
+    candidates = {k: v for k, v in cfg["sources"].items() if not v.get("parser")}
     if forced:
         candidates = {forced: cfg["sources"][forced]}
     best = None
@@ -160,7 +194,7 @@ def shift_hours(code: str, legend: dict):
     if c in legend:
         return legend[c], start, None
     if computed is not None:
-        problem = f"shift '{code}' is not in the printed shift legend; hours computed from times" if legend else None
+        problem = f"unusual shift '{code}' (not in the schedule's shift list, so hours were worked out from the times)" if legend else None
         return round(computed, 2), start, problem
     return None, None, f"unrecognised schedule entry '{code}'"
 
@@ -204,19 +238,49 @@ def _rows_from_text(text: str, legend: dict) -> list[list[str]]:
     return rows
 
 
+HEADING_NOISE = re.compile(r"(weekly|staff|schedule|roster|rota|shifts?|week of.*|for the week.*|posted.*|page \d+.*)", re.I)
+
+
+def page_heading(text: str) -> str:
+    for line in text.splitlines():
+        line = line.strip()
+        if not line or DAY_RE.search(line):
+            continue
+        part = re.split(r"\s+[—–-]\s+|:\s", line)[0]
+        part = HEADING_NOISE.sub("", part).strip(" ,-—–|")
+        if part:
+            return part
+    return ""
+
+
+def looks_like_grid(data: bytes) -> bool:
+    """A schedule grid: a header row with 3+ day columns ("Mon 09/14")."""
+    import pdfplumber
+    with pdfplumber.open(io.BytesIO(data)) as pdf:
+        for page in pdf.pages[:3]:
+            text = page.extract_text() or ""
+            for line in text.splitlines():
+                if len(DAY_RE.findall(line)) >= 3:
+                    return True
+    return False
+
+
 def ingest_weekly_grid(data: bytes, filename: str, cfg: dict, as_of: date, source: str):
     import pdfplumber
     fac_ref = None
-    for spec in cfg["sources"][source]["fields"].values():
-        if spec.get("type") == "code" and spec.get("ref") == "facility":
-            from .normalize import build_ref
-            fac_ref = build_ref(cfg["reference"]["facility"])
+    fspec = cfg["sources"][source]["fields"].get("facility", {})
+    ref = fspec.get("ref")
+    if fspec.get("type") == "code" and ref and cfg.get("reference", {}).get(ref):
+        from .normalize import build_ref
+        fac_ref = build_ref(cfg["reference"][ref])
     out, notes = [], {"pages": []}
     with pdfplumber.open(io.BytesIO(data)) as pdf:
         for pno, page in enumerate(pdf.pages, start=1):
             text = page.extract_text() or ""
             legend = parse_legend(text)
             facility_raw = None
+            if not fac_ref:     # no vocabulary: use the page heading ("Harborview Bayside — Weekly Staff Schedule")
+                facility_raw = page_heading(text)
             if fac_ref:
                 for line in text.splitlines()[:6] + text.splitlines():
                     s = simplify(line)
@@ -284,15 +348,13 @@ def ingest_weekly_grid(data: bytes, filename: str, cfg: dict, as_of: date, sourc
 
 
 def ingest_file(data: bytes, filename: str, cfg: dict, as_of: date, forced: str | None = None):
-    is_pdf = filename.lower().endswith(".pdf") or data[:4] == b"%PDF"
-    if is_pdf:
-        pdf_sources = [k for k, v in cfg["sources"].items() if v.get("format") == "pdf"]
-        source = forced or (pdf_sources[0] if pdf_sources else None)
-        if not source:
-            raise ValueError("No PDF source is configured for this client.")
-        parser = cfg["sources"][source].get("parser")
-        if parser != "weekly_grid":
-            raise ValueError(f"Unknown PDF parser '{parser}'")
-        rows, notes = ingest_weekly_grid(data, filename, cfg, as_of, source)
-        return source, rows, notes
+    if is_pdf(data, filename):
+        grid_sources = [k for k, v in cfg["sources"].items() if v.get("parser") == "weekly_grid"]
+        source = forced if forced in grid_sources else None
+        if not source and not forced and grid_sources and looks_like_grid(data):
+            source = grid_sources[0]
+        if source:
+            rows, notes = ingest_weekly_grid(data, filename, cfg, as_of, source)
+            return source, rows, notes
+        # a PDF containing an ordinary table: treat it exactly like a CSV
     return ingest_tabular(data, filename, cfg, forced)

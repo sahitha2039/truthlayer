@@ -64,6 +64,8 @@ sources:
     record_key: payroll_id
     match: {by: name, hints: {role: job_code, facility: facility_code}}
     duplicate_check: [employee_name, period_start, period_end, facility_code, hours_paid]
+    duplicate_title: Possibly paid twice
+    duplicate_category: Staffing
 
   licensing:
     label: Licensing service
@@ -113,16 +115,16 @@ rules:
   - type: presence
     id: missing_from_source
     expect:
-      payroll:   {severity: warning, category: Staffing, when: {role: [RN, LPN, CNA, ADMIN, DON]}, message: "On the HR roster but has no payroll records"}
-      licensing: {severity: critical, category: Credentials, when: {role: [RN, LPN, CNA]}, message: "Licensed role but no record from the licensing service (unverified)"}
-      schedule:  {severity: info, category: Staffing, when: {role: [RN, LPN, CNA]}, message: "Clinical staff not on the posted schedule"}
+      payroll:   {severity: warning, category: Staffing, when: {role: [RN, LPN, CNA, ADMIN, DON]}, message: "On the HR roster but never paid"}
+      licensing: {severity: critical, category: Credentials, when: {role: [RN, LPN, CNA]}, message: "License can't be verified (not found in the licensing service)"}
+      schedule:  {severity: info, category: Staffing, when: {role: [RN, LPN, CNA]}, message: "Not on the posted schedule"}
 
   - type: required_attribute
     id: license_required
     attribute: license_number
     when: {role: [RN, LPN, CNA]}
     severity: critical
-    message: "Role requires a license but none is on file"
+    message: "Needs a license, but none is on file"
 
   - type: expiration
     id: license_expiry
@@ -139,6 +141,7 @@ rules:
 
   - type: activity_after_expiry
     id: worked_after_expiry
+    title: "Worked after license expired"
     attribute: license_expiration
     activity:
       schedule: {date: date, label: "scheduled shift"}   # rows with 0 hours (OFF) are ignored
@@ -152,6 +155,7 @@ rules:
     b: {source: schedule, measure: hours, date: date, group: facility, verb: Scheduled}
     coverage: every_day     # only compare pay periods the posted schedule fully covers
     unit: " h"
+    action: "Confirm the hours actually worked before they are reported."
     tolerance: 0.5
     when: {role: [RN, LPN, CNA]}     # only staff who appear on the clinical schedule
     severity: warning

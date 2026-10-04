@@ -15,68 +15,38 @@ pip install -r requirements.txt
 uvicorn truthlayer.app:app --port 8000        # open http://localhost:8000
 ```
 
-Go to **Ingest**, drop the four files (or click *Load sample data*), then click **Process data**.
+1. **Pick a company** (or add one). Each company is its own workspace with its own files, setup, data and problem log.
+2. **New company → guided setup.** Drop that company's CSV, Excel or PDF exports (PDF tables and printed schedule grids are read automatically). TruthLayer works out which file is the
+   master list, how the other files link to it (by comparing actual values), which fields to compare and which checks
+   to run. You review the suggestions on one screen and save.
+3. **Judging day:** choose "Start with the Harborview setup, no data" and drop in the four real files.
+4. **Demo companies** are one click away: Harborview (healthcare, uses the healthcare pack for the schedule PDF),
+   Northwind (retail) and Apex (manufacturing). The last two are set up automatically from their CSVs.
 
 Other ways to run it:
 
 ```bash
-# CLI fallback: prints every flag, no browser needed
-python -m truthlayer.cli path/to/*.csv path/to/schedule.pdf
-
-# evaluate as of a fixed date (expiry and staleness rules use this)
-python -m truthlayer.cli sample_data/* --as-of 2026-10-04
-
-# the second client, same engine
-TRUTHLAYER_CONFIG=clients/northwind_retail.yaml TRUTHLAYER_SAMPLE=sample_data_retail \
-  TRUTHLAYER_DB=retail.db uvicorn truthlayer.app:app --port 8001
-
-# tests: every planted problem is caught, and mangled exports still load
-python tests/test_engine.py
-```
-
-## Layout
-
-```
-truthlayer/
-  ingest.py     header mapping (synonyms + fuzzy), CSV/TSV/XLSX, PDF weekly-grid connector
-  normalize.py  dates, phones, IDs, license numbers, coded values, person names + nicknames
-  engine.py     resolve entities → reconcile attributes → run rules → persist; human decisions
-  rules.py      generic rule types (presence, expiration, staleness, activity-after-expiry,
-                aggregate comparison, duplicate entity, date order)
-  views.py      business views: staffing report, credentials, referral readiness
-  store.py      SQLite schema (portable SQL)
-  app.py        REST API + UI host
-  cli.py        command-line runner
-clients/
-  harborview.yaml        everything specific to Harborview
-  northwind_retail.yaml  a different industry, same engine
-static/index.html        the UI (no build step)
-sample_data/             messy Harborview test files with planted problems (see tools/make_sample_data.py)
-tests/test_engine.py
+python -m truthlayer.cli --config clients/harborview.yaml sample_data/*     # CLI fallback, prints every flag
+python tests/test_engine.py                                                 # engine: planted problems are caught
+python tests/test_setup.py                                                  # guided setup works for 3 industries
 ```
 
 ## API
 
 | Method | Path | Purpose |
 |---|---|---|
-| POST | `/api/files` | upload one or more files (auto-detects the source; `source` form field to override) |
-| POST | `/api/process` | rebuild the source of truth from all active files |
-| GET | `/api/summary` | counts and trust metrics |
-| GET | `/api/entities`, `/api/entities/{key}` | canonical records, with evidence, records, issues and timeline |
-| GET | `/api/issues?status=&severity=&category=` | review queue |
-| POST | `/api/issues/{id}/resolve` | `{decision: choose\|confirm\|reject\|acknowledge\|dismiss\|reopen, value, note, reviewer}` |
-| GET | `/api/views/{staffing\|credentials\|coverage}` | business views |
-| GET | `/api/export/{staffing\|issues\|entities}.csv` | exports |
-| GET | `/api/events` | audit log |
+| GET/POST | `/api/workspaces` | list companies and demo presets / create a company (`{name}` or `{preset}`) |
+| POST | `/api/w/{company}/setup/files` | add files to the guided setup; returns the suggested setup |
+| POST | `/api/w/{company}/setup/save` | save the (edited) suggestions and build the source of truth |
+| POST | `/api/w/{company}/files` | upload more files later (auto-detected against the company's setup) |
+| GET | `/api/w/{company}/summary`, `/entities`, `/entities/{key}`, `/issues` | the source of truth and review queue |
+| POST | `/api/w/{company}/issues/{id}/resolve` | record a decision |
+| GET | `/api/w/{company}/views/{name}` | business views (healthcare pack: staffing, credentials, coverage; any company: expiring, totals) |
+| GET | `/api/w/{company}/tables`, `/tables/{name}` | the read-only SQL views |
+| GET | `/api/w/{company}/events` | audit log |
 
 ## Onboarding a new client
 
-Write a YAML file like `clients/harborview.yaml`:
-
-1. **entity**: what a "thing" is and which source is the system of record.
-2. **reference**: vocabularies (every spelling → one code).
-3. **sources**: fields, types and synonyms for each file, and how each one links to an entity.
-4. **attributes**: which source fields feed each canonical attribute, and who is authoritative.
-5. **rules**: pick from the generic rule types and set thresholds.
-
-A new file format, such as a different PDF layout, is a new connector in `ingest.py`. Nothing else changes.
+Usually: create the company and drop its files. The guided setup writes `workspaces/<company>/config.yaml`.
+You can also write that file by hand (see `clients/harborview.yaml`) for things the setup can't infer, such as
+industry packs (PDF schedule reader, staffing report, shift coverage).

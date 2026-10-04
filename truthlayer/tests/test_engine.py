@@ -40,23 +40,23 @@ def has(st, key, text):
 
 
 EXPECTED = [
-    ("E204", "license expiration differs"),
+    ("E204", "disagree on license expiration"),
     ("E205", "license expired"),
-    ("E205", "active after credential expired"),
+    ("E205", "worked after"),
     ("E203", "expires in 42 days"),
     ("E209", "verification is"),
-    ("E208", "no record from the licensing service"),
+    ("E208", "can't be verified"),
     ("E208", "scheduled 32 h but not paid"),
-    ("E206", "facility differs"),
+    ("E206", "disagree on facility"),
     ("E206", "above the expected maximum"),
-    ("E207", "role differs"),
-    ("E207", "name differs"),
-    ("E202", "identical rows"),
+    ("E207", "disagree on role"),
+    ("E207", "disagree on name"),
+    ("E202", "paid twice"),
     ("E203", "paid 44 h vs scheduled 36 h"),
-    ("E201", "possible match"),
+    ("E201", "the same employee"),
     ("E211", "possible duplicate"),
     ("E210", "not a valid date"),
-    ("U-diaz-carmen", "not on the hr roster"),
+    ("U-diaz-carmen", "not found in hr roster"),
 ]
 
 
@@ -74,7 +74,7 @@ def test_sample_catches_everything():
     recs = st.q("SELECT match_status, match_method FROM records WHERE entity_key='E202' AND source='schedule'")
     assert recs and all(r["match_status"] == "auto" for r in recs)
     # no false positive: people whose data is clean
-    assert not any(k == "E201" and "differs" in t for k, t in titles(st))
+    assert not any(k == "E201" and "disagree" in t for k, t in titles(st))
 
 
 def mangle_csv(data, rename, delimiter=",", title_row=None, blank_rows=True, reorder=True):

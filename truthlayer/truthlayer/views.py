@@ -73,8 +73,9 @@ def staffing(eng):
         row["staff"].add(r["entity_key"])
         reasons = []
         if r["match_status"] not in ("auto", "confirmed", "anchor"):
-            reasons.append("record not linked to a verified employee")
-        reasons += by_record.get(r["id"], []) + by_entity.get(r["entity_key"], [])
+            reasons.append(f"{(ent or {}).get('display_name') or 'Unknown'}: not matched to anyone in the system of record yet")
+        who = (ent or {}).get("display_name") or r["raw"].get("employee_name") or "?"
+        reasons += [f"{who}: {t}" for t in by_record.get(r["id"], []) + by_entity.get(r["entity_key"], [])]
         if reasons:
             row["flagged"] += h
             row["reasons"].update(reasons)
@@ -217,3 +218,78 @@ def coverage(eng):
                 cells.append({"date": d, "band": name, "staff": staff, "status": status})
         out[fac] = {"cells": cells, "ready": ok, "total": len(cells)}
     return {"facilities": out, "dates": sorted(dates), "bands": [b[0] for b in BANDS], "required_any": need}
+
+
+# ------------------------------------------------------------------ generic views (any industry)
+def expiring(eng):
+    """Everything with an expiry date, from the client's `expiration` rules."""
+    rules = [r for r in eng.cfg.get("rules", []) if r["type"] == "expiration"]
+    if not rules:
+        return None
+    ents, recs, issues = _load(eng)
+    today = eng.as_of()
+    out = []
+    for r in rules:
+        rows = []
+        for k, e in ents.items():
+            a = e["attrs"].get(r["attribute"], {})
+            d = _d(a.get("value"))
+            if not d:
+                continue
+            days = (d - today).days
+            status = "expired" if days < r.get("critical_days", 0) else "soon" if days <= r.get("warn_days", 60) else "ok"
+            rows.append({"entity_key": k, "name": e["display_name"], "date": a["value"], "days_left": days, "status": status,
+                         "disputed": a.get("status") == "CONFLICT", "sources": a.get("sources")})
+        rows.sort(key=lambda x: x["days_left"])
+        out.append({"label": r.get("label", r["attribute"]), "attribute": r["attribute"], "warn_days": r.get("warn_days", 60), "rows": rows,
+                    "counts": {s: sum(1 for x in rows if x["status"] == s) for s in ("expired", "soon", "ok")}})
+    return {"groups": out, "as_of": today.isoformat()}
+
+
+def totals(eng):
+    """Per-period totals from two systems that should agree (aggregate_compare rules)."""
+    rules = [r for r in eng.cfg.get("rules", []) if r["type"] == "aggregate_compare"]
+    if not rules:
+        return None
+    ents, recs, issues = _load(eng)
+    out = []
+    for r in rules:
+        A, B = r["a"], r["b"]
+        flagged = {i["entity_key"] for i in issues if i["rule"] == r["id"]}
+        per = defaultdict(lambda: {"a": 0.0, "b": 0.0})
+        periods = set()
+        for x in recs:
+            if x["source"] == A["source"]:
+                s, t = x["norm"].get(A["start"]), x["norm"].get(A["end"])
+                if s and t:
+                    per[(x["entity_key"], s, t)]["a"] += x["norm"].get(A["measure"]) or 0
+                    periods.add((s, t))
+        for x in recs:
+            if x["source"] == B["source"]:
+                d = x["norm"].get(B["date"])
+                for (s, t) in periods:
+                    if d and s <= d <= t:
+                        per[(x["entity_key"], s, t)]["b"] += x["norm"].get(B["measure"]) or 0
+        # only periods the second system actually covers (same rule the check uses)
+        b_dates = {x["norm"].get(B["date"]) for x in recs if x["source"] == B["source"] and x["norm"].get(B["date"])}
+        def covered(s, t):
+            sd, td = _d(s), _d(t)
+            if not b_dates or not sd or not td:
+                return False
+            if r.get("coverage", "every_day") == "every_day":
+                return all((sd + timedelta(i)).isoformat() in b_dates for i in range((td - sd).days + 1))
+            slack = timedelta(days=r.get("slack_days", 0))
+            return _d(min(b_dates)) - slack <= sd and td <= _d(max(b_dates)) + slack
+        ok_periods = {pp for pp in periods if covered(*pp)}
+        rows = []
+        for (k, s, t), v in sorted(per.items(), key=lambda kv: (kv[0][1], -(abs(kv[1]["a"] - kv[1]["b"])))):
+            if (s, t) not in ok_periods or k is None:
+                continue
+            e = ents.get(k) or {}
+            rows.append({"entity_key": k, "name": e.get("display_name", k), "period_start": s, "period_end": t,
+                         "a": round(v["a"], 2), "b": round(v["b"], 2), "diff": round(v["a"] - v["b"], 2),
+                         "ok": abs(v["a"] - v["b"]) <= r.get("tolerance", 0), "flagged": k in flagged})
+        out.append({"id": r["id"], "label": r.get("label", r["id"]), "a_label": A.get("verb", eng.label(A["source"])),
+                    "b_label": B.get("verb", eng.label(B["source"])), "prefix": r.get("prefix", ""), "unit": r.get("unit", ""),
+                    "rows": rows, "mismatched": sum(1 for x in rows if not x["ok"]), "total": len(rows)})
+    return {"groups": out}

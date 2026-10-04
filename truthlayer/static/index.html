@@ -6,83 +6,152 @@
 <title>TruthLayer</title>
 <style>
 :root{
-  --bg:#f6f7f9; --panel:#fff; --ink:#14181f; --muted:#5d6675; --line:#e3e6eb; --soft:#f0f2f5;
-  --accent:#2f5bea; --accent-soft:#e8eefe;
-  --crit:#c4302b; --crit-soft:#fdecec; --warn:#b26a00; --warn-soft:#fff4e0; --info:#4a5566; --info-soft:#eef0f3;
-  --ok:#1f7a4d; --ok-soft:#e5f5ec; --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+  --bg:#f7f7f8; --panel:#fff; --ink:#1d2330; --muted:#6b7280; --faint:#9ca3af; --line:#e7e8ec; --soft:#f3f4f6;
+  --accent:#3156d3; --accent-soft:#eef2fd;
+  --red:#c2410c; --red-soft:#fef2ee; --amber:#b7791f; --amber-soft:#fdf6e7; --green:#2f7d55; --green-soft:#ecf6f0;
+  --mono: ui-monospace, SFMono-Regular, Menlo, monospace;
 }
 *{box-sizing:border-box}
-body{margin:0;font:14px/1.45 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink)}
-a{color:var(--accent);text-decoration:none}
+body{margin:0;font:15px/1.55 -apple-system,BlinkMacSystemFont,"Segoe UI",Inter,Roboto,sans-serif;background:var(--bg);color:var(--ink);-webkit-font-smoothing:antialiased}
+a{color:var(--accent);text-decoration:none;cursor:pointer} a:hover{text-decoration:underline}
+button{font:inherit}
 .app{display:grid;grid-template-columns:220px 1fr;min-height:100vh}
-nav{background:#10141b;color:#c9d1dd;padding:18px 12px;position:sticky;top:0;height:100vh}
-nav .brand{font-weight:700;color:#fff;font-size:17px;padding:0 10px 2px;letter-spacing:.2px}
-nav .client{font-size:12px;color:#8995a7;padding:0 10px 18px}
-nav a{display:flex;justify-content:space-between;align-items:center;color:#c9d1dd;padding:8px 10px;border-radius:7px;margin:1px 0}
-nav a:hover{background:#1b2230} nav a.on{background:#24304a;color:#fff}
-nav .sec{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:#6b778a;padding:14px 10px 4px}
-nav .pill{background:#c4302b;color:#fff;border-radius:10px;padding:0 7px;font-size:11px}
-main{padding:24px 28px;max-width:1280px;width:100%}
-h1{font-size:22px;margin:0 0 4px} h2{font-size:16px;margin:24px 0 10px} h3{font-size:14px;margin:0 0 8px}
-.sub{color:var(--muted);margin-bottom:18px}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:16px}
-.grid{display:grid;gap:12px}
-.g4{grid-template-columns:repeat(4,minmax(0,1fr))} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.metric .v{font-size:28px;font-weight:650;letter-spacing:-.5px} .metric .l{color:var(--muted);font-size:12.5px}
-.metric .d{color:var(--muted);font-size:11.5px;margin-top:6px}
-table{width:100%;border-collapse:collapse;background:var(--panel)}
-th,td{text-align:left;padding:8px 10px;border-bottom:1px solid var(--line);vertical-align:top}
-th{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted);font-weight:600;background:var(--soft)}
-tr.click:hover td{background:#fafbff;cursor:pointer}
-.tbl{border:1px solid var(--line);border-radius:10px;overflow:auto}
-.badge{display:inline-block;padding:1px 8px;border-radius:999px;font-size:11.5px;font-weight:600;white-space:nowrap}
-.critical,.b-expired,.b-CONFLICT,.b-gap{background:var(--crit-soft);color:var(--crit)}
-.warning,.b-expiring,.b-conflict,.b-at_risk,.b-unverified,.b-missing,.b-stale,.b-review{background:var(--warn-soft);color:var(--warn)}
-.info,.b-SINGLE_SOURCE,.b-empty,.b-MISSING{background:var(--info-soft);color:var(--info)}
-.b-CONFIRMED,.b-valid,.b-ok,.b-RESOLVED,.b-resolved,.b-auto,.b-anchor,.b-confirmed,.b-verified{background:var(--ok-soft);color:var(--ok)}
-.b-acknowledged,.b-dismissed{background:var(--info-soft);color:var(--info)}
-.b-open{background:var(--accent-soft);color:var(--accent)}
-.btn{border:1px solid var(--line);background:#fff;border-radius:7px;padding:6px 12px;font:inherit;cursor:pointer}
-.btn:hover{border-color:#b9c0cc} .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
-.btn.small{padding:3px 9px;font-size:12.5px} .btn:disabled{opacity:.5;cursor:default}
-.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
-.spacer{flex:1}
-input,select{font:inherit;border:1px solid var(--line);border-radius:7px;padding:6px 9px;background:#fff}
-.muted{color:var(--muted)} .mono{font-family:var(--mono);font-size:12.5px}
-.issue{border:1px solid var(--line);border-left:4px solid var(--info);border-radius:8px;background:#fff;padding:12px 14px;margin-bottom:8px}
-.issue.sev-critical{border-left-color:var(--crit)} .issue.sev-warning{border-left-color:var(--warn)}
-.issue .t{font-weight:600} .issue .meta{font-size:12px;color:var(--muted);margin:2px 0 6px}
-.issue details{margin-top:6px} .issue summary{cursor:pointer;color:var(--muted);font-size:12.5px}
-.issue.closed{opacity:.65}
-.drop{border:2px dashed #c3cad6;border-radius:12px;padding:28px;text-align:center;background:#fbfcfe;color:var(--muted)}
-.drop.over{border-color:var(--accent);background:var(--accent-soft)}
-.attr{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}
-.attr .name{font-size:11.5px;text-transform:uppercase;letter-spacing:.05em;color:var(--muted)}
-.attr .val{font-size:16px;font-weight:600;margin:2px 0 6px}
-.lineage{display:grid;grid-template-columns:110px 18px 1fr;gap:3px 0;align-items:center;font-size:12.5px}
-.lineage .src{color:var(--muted);text-align:right;padding-right:6px}
-.lineage .wire{height:2px;background:#cfd5df}
-.lineage .wire.bad{background:var(--crit)}
-.lineage .v{padding:2px 8px;border-radius:6px;background:var(--soft);justify-self:start}
-.lineage .v.bad{background:var(--crit-soft);color:var(--crit)} .lineage .v.auth{outline:1.5px solid var(--accent)}
-.timeline{border-left:2px solid var(--line);margin-left:6px;padding-left:16px}
-.timeline .ev{position:relative;margin-bottom:10px}
-.timeline .ev:before{content:"";position:absolute;left:-22px;top:5px;width:10px;height:10px;border-radius:50%;background:#c3cad6}
-.timeline .ev.decision:before{background:var(--accent)} .timeline .ev.issue_detected:before{background:var(--warn)}
-.timeline .ev.issue_cleared:before{background:var(--ok)}
-.cov{display:grid;gap:3px} .cov .c{border-radius:6px;padding:6px;font-size:11.5px;min-height:54px}
-.cov .h{font-size:11.5px;color:var(--muted);text-align:center;padding:4px}
-.cov .c.ok{background:var(--ok-soft)} .cov .c.gap{background:var(--crit-soft)} .cov .c.at_risk{background:var(--warn-soft)} .cov .c.empty{background:var(--soft)}
-.cov .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cov .p.blk{color:var(--crit);font-weight:600}
-.chip{display:inline-block;font-size:11px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--soft);color:var(--muted);margin-right:3px}
-.chip.on{background:var(--accent-soft);color:var(--accent)}
-pre{background:#0f1420;color:#d8e0ee;padding:14px;border-radius:10px;overflow:auto;font-size:12px;max-height:520px}
-.bar{height:8px;background:var(--soft);border-radius:4px;overflow:hidden} .bar>i{display:block;height:100%;background:var(--ok)}
-.toast{position:fixed;bottom:18px;right:18px;background:#10141b;color:#fff;padding:10px 14px;border-radius:8px;display:none;max-width:420px}
-.impact .k{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}
-.impact .big{font-size:22px;font-weight:650;margin:4px 0}
-.empty-state{padding:40px;text-align:center;color:var(--muted)}
-@media (max-width:900px){.app{grid-template-columns:1fr} nav{position:static;height:auto} .g4,.g3{grid-template-columns:1fr 1fr} main{padding:16px}}
+
+/* sidebar: dark */
+nav{background:#10141b;color:#c9d1dd;padding:22px 14px;position:sticky;top:0;height:100vh;display:flex;flex-direction:column}
+nav .brand{font-weight:700;font-size:16px;padding:0 10px;color:#fff}
+nav .client{font-size:13px;color:#8995a7;padding:0 10px 22px}
+nav a.link{display:flex;justify-content:space-between;align-items:center;color:#c9d1dd;padding:8px 10px;border-radius:8px;margin:1px 0;text-decoration:none}
+nav a.link:hover{background:#1b2230;text-decoration:none} nav a.link.on{background:#24304a;color:#fff;font-weight:600}
+nav .count{font-size:12px;color:#fff;background:#c4302b;border-radius:10px;padding:0 7px;font-weight:600}
+nav .count:empty{display:none}
+nav .settings{margin-top:auto;font-size:12.5px;color:#8995a7;display:grid;gap:10px;padding:0 10px}
+nav .settings input{width:100%;margin-top:3px;font-size:13px;padding:5px 8px;background:#1b2230;border:1px solid #2a3446;color:#e6ebf2;color-scheme:dark}
+
+main{padding:36px 44px 80px;max-width:1080px;width:100%}
+h1{font-size:24px;margin:0 0 6px;font-weight:650;letter-spacing:-.2px}
+h2{font-size:17px;margin:40px 0 4px;font-weight:600}
+h3{font-size:15px;margin:0 0 6px;font-weight:600}
+.sub{color:var(--muted);margin:0 0 16px}
+.lead{font-size:16px;color:var(--muted);margin:0 0 8px;max-width:720px}
+.lead b{color:var(--ink);font-weight:600}
+.muted{color:var(--muted)} .faint{color:var(--faint)} .small{font-size:13px} .mono{font-family:var(--mono);font-size:12.5px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap} .spacer{flex:1}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:20px}
+.grid{display:grid;gap:14px} .g3{grid-template-columns:repeat(3,minmax(0,1fr))} .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.btn{border:1px solid var(--line);background:#fff;border-radius:8px;padding:6px 13px;cursor:pointer;color:var(--ink);font-size:14px}
+.btn:hover{border-color:#c9ccd3} .btn.primary{background:var(--accent);color:#fff;border-color:var(--accent)}
+.btn.small{padding:3px 10px;font-size:13px} .btn.quiet{border-color:transparent;background:none;color:var(--muted)} .btn.quiet:hover{color:var(--ink);background:var(--soft)}
+.btn.danger{color:var(--red)} .btn:disabled{opacity:.5;cursor:default}
+input,select{font:inherit;border:1px solid var(--line);border-radius:8px;padding:6px 10px;background:#fff;color:var(--ink)}
+.dot{display:inline-block;width:8px;height:8px;border-radius:50%;flex:none}
+.d-red{background:var(--red)} .d-amber{background:#e0a33a} .d-gray{background:#c9ccd3} .d-green{background:var(--green)}
+.tag{display:inline-block;font-size:12px;padding:1px 8px;border-radius:6px;background:var(--soft);color:var(--muted);white-space:nowrap}
+.tag.red{background:var(--red-soft);color:var(--red)} .tag.green{background:var(--green-soft);color:var(--green)} .tag.amber{background:var(--amber-soft);color:var(--amber)} .tag.blue{background:var(--accent-soft);color:var(--accent)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+th,td{text-align:left;padding:10px 14px;border-bottom:1px solid var(--line);vertical-align:top}
+th{font-size:12.5px;color:var(--muted);font-weight:500;background:#fcfcfd}
+tr:last-child td{border-bottom:none}
+.tbl{border:1px solid var(--line);border-radius:12px;overflow:auto;background:#fff}
+tr.click{cursor:pointer} tr.click:hover td{background:#fafbfc}
+
+/* files */
+.files{background:#fff;border:1px solid var(--line);border-radius:12px}
+.file{display:grid;grid-template-columns:20px 170px 1fr auto;gap:12px;align-items:center;padding:12px 16px;border-bottom:1px solid var(--line)}
+.file:last-child{border-bottom:none}
+.file .name{font-weight:500}
+.file .meta{color:var(--muted);font-size:13.5px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.file.missing .name{color:var(--muted)}
+.file .acts{display:flex;gap:4px}
+
+/* summary cards */
+.sum{display:flex;flex-direction:column;cursor:pointer;min-height:190px}
+.sum:hover{border-color:#c9ccd3}
+.sum .label{font-size:14px;color:var(--muted);font-weight:500}
+.sum .big{font-size:34px;font-weight:650;letter-spacing:-.6px;margin:10px 0 2px;line-height:1.1}
+.sum .says{color:var(--ink);font-size:14.5px}
+.sum .extra{color:var(--muted);font-size:13.5px;margin-top:8px}
+.sum .go{margin-top:auto;padding-top:14px;font-size:14px;color:var(--accent)}
+.bar{height:6px;background:var(--soft);border-radius:3px;overflow:hidden;margin-top:12px}
+.bar>i{display:block;height:100%;background:var(--green)}
+
+/* to-do */
+.tabs{display:flex;gap:4px;margin:10px 0 12px}
+.tabs button{border:none;background:none;padding:6px 12px;border-radius:8px;cursor:pointer;color:var(--muted);font-size:14px}
+.tabs button.on{background:#fff;color:var(--ink);box-shadow:0 0 0 1px var(--line);font-weight:500}
+.todo{background:#fff;border:1px solid var(--line);border-radius:12px}
+.item{border-bottom:1px solid var(--line)} .item:last-child{border-bottom:none}
+.item>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:12px;padding:13px 18px}
+.item>summary::-webkit-details-marker{display:none}
+.item>summary:hover{background:#fafbfc}
+.item .t{flex:1;min-width:0}
+.item .who{color:var(--muted)}
+.item .chev{color:var(--faint);transition:transform .12s;font-size:18px;line-height:1}
+.item[open] .chev{transform:rotate(90deg)}
+.item[open]>summary{background:#fafbfc}
+.item .body{padding:4px 18px 18px 38px;background:#fafbfc}
+.item .detail{margin:0 0 6px;max-width:760px}
+.item .next{color:var(--muted);font-size:14px}
+.item .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:14px;align-items:center}
+.item.done .t{color:var(--muted)}
+details.ev{margin-top:10px} details.ev summary{cursor:pointer;color:var(--accent);font-size:13.5px}
+details.ev .tbl{margin-top:8px} details.ev table{font-size:13px}
+.more{padding:12px 18px;text-align:center;border-top:1px solid var(--line)}
+
+/* drawer */
+.scrim{position:fixed;inset:0;background:rgba(29,35,48,.25);display:none;z-index:20}
+.drawer{position:fixed;top:0;right:0;bottom:0;width:min(780px,100vw);background:var(--bg);box-shadow:-8px 0 30px rgba(0,0,0,.08);transform:translateX(100%);transition:transform .18s ease;z-index:21;overflow:auto}
+.drawer.open{transform:none} .scrim.open{display:block}
+.drawer .dh{position:sticky;top:0;background:var(--bg);padding:24px 28px 14px;z-index:2;display:flex;align-items:flex-start;gap:12px;border-bottom:1px solid var(--line)}
+.drawer .db{padding:20px 28px 48px}
+.drawer h3{margin-top:26px}
+.x{border:none;background:none;font-size:24px;cursor:pointer;color:var(--muted);line-height:1;padding:2px 6px}
+
+.cmp td.answer{font-weight:600}
+.cmp td.bad{background:var(--red-soft);color:var(--red)}
+.cmp td.none{color:var(--faint)}
+.cmp .star{color:var(--accent);font-size:11px;margin-left:4px}
+
+.cov{display:grid;gap:3px} .cov .c{border-radius:6px;padding:5px 7px;font-size:12px;min-height:46px}
+.cov .h{font-size:12px;color:var(--muted);text-align:center;padding:4px}
+.cov .c.ok{background:var(--green-soft)} .cov .c.gap{background:var(--red-soft)} .cov .c.at_risk{background:var(--amber-soft)} .cov .c.empty{background:var(--soft)}
+.cov .p{white-space:nowrap;overflow:hidden;text-overflow:ellipsis} .cov .p.blk{color:var(--red)}
+
+.timeline{border-left:2px solid var(--line);margin-left:5px;padding-left:16px;font-size:14px}
+.timeline .ev{position:relative;margin-bottom:12px}
+.timeline .ev:before{content:"";position:absolute;left:-21px;top:7px;width:8px;height:8px;border-radius:50%;background:#c9ccd3}
+.timeline .ev.decision:before{background:var(--accent)}
+
+.drop{border:1.5px dashed #c9ccd3;border-radius:12px;padding:40px;text-align:center;background:#fff}
+.dropall{position:fixed;inset:0;background:rgba(49,86,211,.08);border:2px dashed var(--accent);display:none;z-index:40;align-items:center;justify-content:center;font-size:20px;color:var(--accent);font-weight:600}
+.toast{position:fixed;bottom:22px;left:50%;transform:translateX(-50%);background:var(--ink);color:#fff;padding:10px 16px;border-radius:10px;display:none;z-index:50;max-width:560px;font-size:14px}
+pre{background:#f3f4f6;color:var(--ink);padding:14px;border-radius:10px;overflow:auto;font-size:12px;max-height:440px}
+.empty{padding:28px;text-align:center;color:var(--muted)}
+.offer{position:fixed;right:24px;bottom:24px;width:420px;max-width:calc(100vw - 32px);background:#fff;border:1px solid var(--line);border-radius:12px;box-shadow:0 12px 40px rgba(0,0,0,.14);padding:18px 20px;z-index:45}
+.offer h3{margin:0 0 4px} .offer label{display:flex;gap:8px;align-items:flex-start;margin:8px 0;cursor:pointer;font-size:14px}
+.offer input{margin-top:4px}
+/* company picker */
+.companies{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.co{cursor:pointer;display:flex;flex-direction:column;gap:4px;min-height:140px}
+.co:hover{border-color:#c9ccd3}
+.co .nm{font-size:17px;font-weight:600}
+.co .meta{color:var(--muted);font-size:13.5px}
+.co .stat{margin-top:auto;font-size:13.5px}
+.co.new{border-style:dashed;align-items:center;justify-content:center;color:var(--accent)}
+/* setup */
+.step{display:flex;gap:14px;margin:34px 0 10px}
+.step .n{flex:none;width:28px;height:28px;border-radius:50%;background:var(--accent-soft);color:var(--accent);font-weight:700;display:flex;align-items:center;justify-content:center;font-size:14px}
+.step h2{margin:2px 0 2px}
+.choice{background:#fff;border:1px solid var(--line);border-radius:12px;padding:16px 18px;margin-bottom:10px}
+.choice label{display:flex;gap:8px;align-items:flex-start;cursor:pointer;margin:6px 0}
+.choice input[type=checkbox]{margin-top:4px}
+.why{color:var(--muted);font-size:13px}
+.sticky-save{position:sticky;bottom:0;background:linear-gradient(transparent,var(--bg) 30%);padding:24px 0 12px;margin-top:20px}
+nav .switch{font-size:12.5px;color:#8995a7;padding:0 10px 18px;margin-top:-16px;display:block}
+nav .switch:hover{color:#fff}
+.legend{display:flex;gap:16px;flex-wrap:wrap;font-size:13px;color:var(--muted);margin-bottom:12px}
+.legend span{display:inline-flex;align-items:center;gap:6px}
+@media (max-width:960px){.app{grid-template-columns:1fr} nav{position:static;height:auto} .g3,.g2{grid-template-columns:1fr} main{padding:20px 16px} .file{grid-template-columns:20px 1fr;}.file .meta,.file .acts{grid-column:2}}
 </style>
 </head>
 <body>
@@ -90,337 +159,719 @@ pre{background:#0f1420;color:#d8e0ee;padding:14px;border-radius:10px;overflow:au
   <nav>
     <div class="brand">TruthLayer</div>
     <div class="client" id="client">…</div>
-    <a href="#/overview" data-r="overview">Overview</a>
-    <a href="#/ingest" data-r="ingest">Ingest</a>
-    <a href="#/entities" data-r="entities">Source of truth</a>
-    <a href="#/issues" data-r="issues">Review queue <span class="pill" id="navIssues"></span></a>
-    <div class="sec" id="bizsec">Business views</div>
-    <a href="#/staffing" data-r="staffing">Staffing report</a>
-    <a href="#/credentials" data-r="credentials">Credentials</a>
-    <a href="#/coverage" data-r="coverage">Referral readiness</a>
-    <div class="sec">System</div>
-    <a href="#/audit" data-r="audit">Audit log</a>
-    <a href="#/platform" data-r="platform">Platform config</a>
+    <a class="switch" href="#/" id="switch">⇄ Switch company</a>
+    <div id="wsnav">
+    <a class="link" data-r="" data-page="">Home <span class="count" id="navCount"></span></a>
+    <a class="link" data-r="people" data-page="people" id="navPeople">People</a>
+    <a class="link" data-r="system" data-page="system">How it works</a>
+    </div>
+    <div class="settings" id="wssettings">
+      <label>Check dates as of<input type="date" id="asof"></label>
+      <label>Your name (for the log)<input id="rev" placeholder="e.g. Sahi"></label>
+    </div>
   </nav>
   <main id="main"></main>
 </div>
+<div class="scrim" id="scrim"></div>
+<aside class="drawer" id="drawer"><div class="dh"><div id="dhead" style="flex:1"></div><button class="x" id="dclose" aria-label="Close">×</button></div><div class="db" id="dbody"></div></aside>
+<div class="dropall" id="dropall">Drop to upload</div>
+<input type="file" id="pick" multiple hidden>
 <div class="toast" id="toast"></div>
 <script>
+/* ============================================================ helpers */
 const $ = s => document.querySelector(s);
 const esc = s => String(s ?? "").replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-const nice = v => { if (v == null || v === "") return "—"; const s = String(v); return /^[A-Z]{4,}$/.test(s) ? s[0] + s.slice(1).toLowerCase() : s; };
-const badge = (t, cls) => `<span class="badge ${cls || "b-" + t}">${esc(String(t).replace(/_/g, " "))}</span>`;
 const api = async (p, o = {}) => { const r = await fetch(p, o); if (!r.ok) throw new Error((await r.text()) || r.statusText); return r.json(); };
-const toast = m => { const t = $("#toast"); t.textContent = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 3500); };
-let reviewer = ""; try { reviewer = localStorage.getItem("tl_reviewer") || ""; } catch (e) {}
-const SRC_SHORT = new Proxy({hr: "HR", payroll: "PAY", licensing: "LIC", schedule: "SCH"}, {get: (t, k) => t[k] || String(k).slice(0, 4).toUpperCase()});
-let CFG = null, SUMMARY = null;
+const post = (p, body) => api(p, {method: "POST", headers: {"Content-Type": "application/json"}, body: JSON.stringify(body || {})});
+let WS = null;                                   // the company we're looking at
+const wapi = (p, o) => api(`/api/w/${WS}${p}`, o);
+const wpost = (p, body) => post(`/api/w/${WS}${p}`, body);
+const go = page => { location.hash = `#/c/${WS}/${page || ""}`; };
+const toast = m => { const t = $("#toast"); t.innerHTML = m; t.style.display = "block"; clearTimeout(t._h); t._h = setTimeout(() => t.style.display = "none", 4000); };
+const num = n => n == null ? "—" : (Math.round(n * 10) / 10).toLocaleString();
+const plural = (n, w, p) => `${n} ${n === 1 ? w : (p || w + "s")}`;
+const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
+function val(v) {
+  if (v == null || v === "") return "—";
+  const s = String(v);
+  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (m) return `${MONTHS[+m[2] - 1]} ${+m[3]}, ${m[1]}`;
+  if (/^[A-Z]{4,}$/.test(s)) return s[0] + s.slice(1).toLowerCase();
+  return s;
+}
+const prose = t => esc(String(t || "").replace(/\b(\d{4})-(\d{2})-(\d{2})\b/g, (m, y, mo, d) => `${MONTHS[+mo - 1]} ${+d}, ${y}`));
+const shortDate = d => { const m = String(d).match(/^\d{4}-(\d{2})-(\d{2})$/); return m ? `${MONTHS[+m[1] - 1]} ${+m[2]}` : d; };
+const when = ts => { const d = new Date(ts); return isNaN(d) ? ts : d.toLocaleString(undefined, {month: "short", day: "numeric", hour: "numeric", minute: "2-digit"}); };
+const msg = m => String(m || "").replace(/^\[(critical|warning|info)\] /, "Flagged: ");
+const SEV_DOT = {critical: "d-red", warning: "d-amber", info: "d-gray"};
+const ATTR_STATUS = {CONFIRMED: ["Systems agree", "green"], SINGLE_SOURCE: ["One system only", ""], CONFLICT: ["Systems disagree", "red"], RESOLVED: ["You decided", "blue"], MISSING: ["Not recorded", ""]};
+const ATTR_NAME = {license_number: "License number", license_expiration: "License expires", license_verified: "License last checked", hire_date: "Hire date"};
+const attrName = a => ATTR_NAME[a] || a.replace(/_/g, " ").replace(/^./, c => c.toUpperCase());
 
-async function refreshSummary() {
-  SUMMARY = await api("/api/summary");
-  $("#client").textContent = SUMMARY.client;
-  const c = SUMMARY.by_severity.critical + SUMMARY.by_severity.warning;
-  $("#navIssues").textContent = c || ""; $("#navIssues").style.display = c ? "" : "none";
-  const map = {staffing: "staffing", credentials: "credentials", coverage: "coverage"};
-  document.querySelectorAll("nav a").forEach(a => { if (map[a.dataset.r]) a.style.display = SUMMARY.views.includes(map[a.dataset.r]) ? "" : "none"; });
-  $("#bizsec").style.display = SUMMARY.views.length ? "" : "none";
+let S = null, CFG = null, LABELS = {}, ANCHOR = "", CURRENT_DRAWER = null;
+let reviewer = ""; try { reviewer = localStorage.getItem("tl_reviewer") || ""; } catch (e) {}
+$("#rev").value = reviewer;
+$("#rev").onchange = e => { reviewer = e.target.value; try { localStorage.setItem("tl_reviewer", reviewer); } catch (err) {} };
+
+async function boot() {
+  if (!CFG || CFG._ws !== WS) { CFG = await wapi("/config"); CFG._ws = WS; }
+  S = await wapi("/summary");
+  LABELS = Object.fromEntries(Object.entries(CFG.parsed.sources).map(([k, v]) => [k, v.label || k]));
+  ANCHOR = S.anchor_label;
+  $("#client").textContent = S.client;
+  document.title = S.client + " · TruthLayer";
+  $("#asof").value = S.as_of;
+  $("#navCount").textContent = S.by_severity.critical || "";
+  $("#navPeople").textContent = S.entity_label + "s";
 }
 
+/* ============================================================ router + drawer */
 const routes = {};
 async function router() {
-  const [, r, arg] = location.hash.split("/");
-  const name = r || "overview";
-  document.querySelectorAll("nav a").forEach(a => a.classList.toggle("on", a.dataset.r === name));
-  try { await refreshSummary(); await (routes[name] || routes.overview)(decodeURIComponent(arg || "")); }
-  catch (e) { $("#main").innerHTML = `<div class="card">Error: ${esc(e.message)}</div>`; }
+  const parts = location.hash.replace(/^#\/?/, "").split("/");   // c/<company>/<page>
+  closeDrawer();
+  const inWs = parts[0] === "c" && parts[1];
+  DROP = inWs ? upload : null;
+  WS = inWs ? decodeURIComponent(parts[1]) : null;
+  const r = inWs ? (parts[2] || "") : null;
+  $("#wsnav").style.display = $("#wssettings").style.display = $("#switch").style.display = inWs ? "" : "none";
+  try {
+    if (!inWs) { $("#client").textContent = "Single source of truth"; document.title = "TruthLayer"; CFG = null; return await pickerPage(); }
+    const info = await wapi("/info");
+    document.querySelectorAll("nav a.link").forEach(a => { a.href = `#/c/${WS}/${a.dataset.page}`; a.classList.toggle("on", a.dataset.r === r); });
+    if (!info.configured || r === "setup") {
+      if (info.configured) await boot(); else $("#wsnav").style.display = $("#wssettings").style.display = "none";
+      $("#client").textContent = info.name; return await setupPage(info);
+    }
+    await boot(); await (routes[r] || routes[""])();
+  } catch (e) { $("#main").innerHTML = `<div class="card">Something went wrong: ${esc(e.message)}</div>`; console.error(e); }
 }
 window.addEventListener("hashchange", router);
+async function refresh() { const d = CURRENT_DRAWER; await router(); if (d) await d(); }
+function openDrawer(head, body, reopen) {
+  $("#dhead").innerHTML = head; $("#dbody").innerHTML = body;
+  $("#drawer").classList.add("open"); $("#scrim").classList.add("open");
+  CURRENT_DRAWER = reopen || null; bindActions($("#dbody"));
+}
+function closeDrawer() { $("#drawer").classList.remove("open"); $("#scrim").classList.remove("open"); CURRENT_DRAWER = null; }
+$("#dclose").onclick = closeDrawer; $("#scrim").onclick = closeDrawer;
+document.addEventListener("keydown", e => { if (e.key === "Escape") closeDrawer(); });
 
-// ------------------------------------------------------------------ overview
-routes.overview = async () => {
-  const s = SUMMARY;
-  if (!s.records) { $("#main").innerHTML = `<h1>Overview</h1><div class="card empty-state">No data yet. <a href="#/ingest">Ingest files</a> to build the source of truth.</div>`; return; }
-  const [staff, cred, cov, top] = await Promise.all([api("/api/views/staffing"), api("/api/views/credentials"), api("/api/views/coverage"), api("/api/issues?status=open")]);
-  const m = s.metrics;
-  const covFac = cov ? Object.entries(cov.facilities) : [];
+/* ============================================================ uploading & removing files */
+let forcedSource = null;
+function pickFiles(source) { forcedSource = source || null; $("#pick").click(); }
+async function upload(files) {
+  if (!files.length) return;
+  const fd = new FormData(); [...files].forEach(f => fd.append("files", f));
+  if (forcedSource) fd.append("source", forcedSource);
+  forcedSource = null;
+  toast("Reading files…");
+  const res = await wapi("/files", {method: "POST", body: fd});
+  await wpost("/process");
+  toast(res.map(r => r.ok ? `Added <b>${esc(r.filename)}</b> as ${esc(r.label)} (${r.records} rows)` : `Couldn't read <b>${esc(r.filename)}</b>: ${esc(r.error)}`).join("<br>"));
+  refresh();
+}
+async function removeFile(id, btn) {
+  if (!btn.dataset.armed) { btn.dataset.armed = 1; btn.textContent = "Click to confirm"; setTimeout(() => { if (btn.isConnected) { delete btn.dataset.armed; btn.textContent = "Remove"; } }, 4000); return; }
+  btn.disabled = true;
+  await wapi("/files/" + id, {method: "DELETE"});
+  toast("File removed. Everything was re-checked without it.");
+  refresh();
+}
+$("#pick").onchange = e => { upload(e.target.files); e.target.value = ""; };
+let dragDepth = 0;
+window.addEventListener("dragenter", e => { e.preventDefault(); dragDepth++; $("#dropall").style.display = "flex"; });
+window.addEventListener("dragleave", () => { if (--dragDepth <= 0) { dragDepth = 0; $("#dropall").style.display = "none"; } });
+window.addEventListener("dragover", e => e.preventDefault());
+let DROP = null;   // what dropping files does on the current page
+window.addEventListener("drop", e => { e.preventDefault(); dragDepth = 0; $("#dropall").style.display = "none"; forcedSource = null;
+  if (DROP) DROP(e.dataTransfer.files); else toast("Open a company first, then drop its files."); });
+$("#asof").onchange = async e => { await wapi("/settings", {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify({as_of: e.target.value})}); toast("Re-checked everything as of " + val(e.target.value)); refresh(); };
+
+/* ============================================================ HOME */
+let todoTab = "open", todoAll = false;
+routes[""] = async () => {
+  if (!S.records) return emptyState();
+  const v = S.views;
+  const [files, issues, cred, staff, cov] = await Promise.all([
+    wapi("/files"), wapi("/issues"),
+    v.includes("credentials") ? wapi("/views/credentials") : null,
+    v.includes("staffing") ? wapi("/views/staffing") : null,
+    v.includes("coverage") ? wapi("/views/coverage") : null]);
+  const gv = v.length ? [] : S.generic_views;
+  const [exp, tot] = await Promise.all([gv.includes("expiring") ? wapi("/views/expiring") : null, gv.includes("totals") ? wapi("/views/totals") : null]);
+  const cards = (cred ? credCard(cred) : "") + (staff ? staffCard(staff) : "") + (cov ? covCard(cov) : "")
+              + (exp ? exp.groups.map((g, i) => expCard(g, i)).join("") : "") + (tot ? tot.groups.map((g, i) => totCard(g, i)).join("") : "");
+  const urgent = S.by_severity.critical, open = S.open_issues;
+
   $("#main").innerHTML = `
-  <div class="row"><div><h1>Overview</h1><div class="sub">What we know about ${esc(s.client)}, as of
-    <input type="date" id="asof" value="${s.as_of}" style="padding:2px 6px"></div></div></div>
-  <div class="grid g4">
-    ${metric(s.entities, s.entity_label + "s in source of truth", s.unverified_entities ? `+ ${s.unverified_entities} unverified found outside ${esc(s.anchor_label)}` : "all anchored to " + esc(s.anchor_label))}
-    ${metric(`${s.sources_loaded}/${s.sources_configured}`, "Sources loaded", Object.entries(s.records_by_source).map(([k, v]) => `${SRC_SHORT[k] || k} ${v}`).join(" · "))}
-    ${metric(s.open_issues, "Open issues", `<span style="color:var(--crit)">${s.by_severity.critical} critical</span> · ${s.by_severity.warning} warning · ${s.by_severity.info} info`)}
-    ${metric(s.resolved, "Decisions recorded", "kept across re-ingests")}
-  </div>
-  <h2>Trust metrics</h2>
-  <div class="grid g3">
-    ${pct(m.records_linked, "Records linked to a verified " + s.entity_label.toLowerCase(), "Rows from every file tied to someone in the " + esc(s.anchor_label) + ", automatically or by a reviewer.")}
-    ${pct(m.fields_agreeing, "Fields where sources agree", "Canonical attributes that are confirmed, single-source, or resolved by a human.")}
-    ${pct(m.entities_without_critical, s.entity_label + "s with no critical issue", "Everyone else has something a person must look at.")}
-  </div>
-  ${s.views.length ? `<h2>Business impact</h2>
-  <div class="grid g3">
-    <a class="card impact" href="#/coverage"><div class="k">Referrals</div>
-      <div class="big">${covFac.map(([f, d]) => `${nice(f)} ${d.ready}/${d.total}`).join(" · ") || "—"}</div>
-      <div class="muted">shifts with a licensed nurse whose record is clean. Answers "can we staff this patient?" in seconds instead of calls.</div></a>
-    <a class="card impact" href="#/staffing"><div class="k">State staffing report</div>
-      <div class="big">${staff ? staff.report_ready_pct + "% report-ready" : "—"}</div>
-      <div class="muted">${staff ? `${fmt(staff.total_flagged)} of ${fmt(staff.total_paid)} paid hours carry an open question. Fix those, export the rest.` : ""}</div></a>
-    <a class="card impact" href="#/credentials"><div class="k">Licenses & credentials</div>
-      <div class="big">${cred ? (cred.counts.expired || 0) + " expired · " + (cred.counts.expiring || 0) + " expiring" : "—"}</div>
-      <div class="muted">${cred ? `${(cred.counts.conflict || 0) + (cred.counts.unverified || 0) + (cred.counts.missing || 0)} more have conflicting or unverified records.` : ""}</div></a>
-  </div>` : ""}
-  <h2>Needs attention</h2>
-  ${top.filter(i => i.severity === "critical").slice(0, 8).map(issueCard).join("") || `<div class="card muted">No critical issues.</div>`}
-  ${top.filter(i => i.severity !== "critical").length ? `<a href="#/issues">See all ${top.length} open issues →</a>` : ""}`;
-  $("#asof").onchange = async e => { await api("/api/settings", {method: "PUT", headers: {"Content-Type": "application/json"}, body: JSON.stringify({as_of: e.target.value})}); toast("Re-evaluated as of " + e.target.value); router(); };
-  bindIssues();
-};
-const fmt = n => n == null ? "—" : (Math.round(n * 10) / 10).toLocaleString();
-const metric = (v, l, d) => `<div class="card metric"><div class="v">${v}</div><div class="l">${l}</div>${d ? `<div class="d">${d}</div>` : ""}</div>`;
-const pct = (v, l, d) => `<div class="card metric"><div class="v">${v == null ? "—" : v + "%"}</div><div class="l">${l}</div><div class="bar" style="margin-top:8px"><i style="width:${v || 0}%"></i></div><div class="d">${d}</div></div>`;
+    <h1>${esc(S.client)}</h1>
+    <p class="lead">${urgent ? `<b>${plural(urgent, "urgent issue")}</b> and ${open - urgent} smaller ones need a look.` : open ? `${plural(open, "item")} to review, nothing urgent.` : "Everything checks out."}
+      Below: your files${cards ? ", the answers to your key questions" : ""}, and a to-do list.</p>
 
-// ------------------------------------------------------------------ ingest
-routes.ingest = async () => {
-  const files = await api("/api/files");
-  CFG = CFG || await api("/api/config");
-  const srcOpts = Object.entries(CFG.parsed.sources).map(([k, v]) => `<option value="${k}">${esc(v.label)}</option>`).join("");
-  $("#main").innerHTML = `
-  <h1>Ingest</h1><div class="sub">Drop the client's exports. Each file is matched to a source by its columns, stored raw, and never modified.</div>
-  <div class="drop" id="drop"><b>Drop CSV, XLSX or PDF files here</b><br>or <label class="btn small" style="margin-top:8px">choose files<input type="file" id="pick" multiple hidden></label>
-    <div style="margin-top:10px">Source: <select id="forced"><option value="">Auto-detect</option>${srcOpts}</select></div></div>
-  <div class="row" style="margin:14px 0">
-    <button class="btn primary" id="process">Process data</button>
-    <button class="btn" id="sample">Load sample data</button>
-    <span class="spacer"></span>
-    <button class="btn" id="reset">Reset everything</button>
-  </div>
-  <div id="result"></div>
-  <h2>Files</h2>
-  ${files.length ? `<div class="tbl"><table><tr><th>File</th><th>Detected as</th><th>Records</th><th>Column mapping</th><th>Received</th><th></th></tr>
-  ${files.map(f => `<tr style="${f.active ? "" : "opacity:.45"}"><td><b>${esc(f.filename)}</b>${f.active ? "" : "<br><span class='muted'>replaced</span>"}</td>
-    <td>${esc(f.label)}</td><td>${f.row_count}</td><td>${mappingNotes(f.notes)}</td><td class="muted">${esc(f.uploaded_at.replace("T", " "))}</td>
-    <td>${f.active ? `<button class="btn small" data-deact="${f.id}">Remove</button>` : ""}</td></tr>`).join("")}</table></div>` : `<div class="card muted">No files yet.</div>`}`;
-  const drop = $("#drop");
-  const send = async list => {
-    const fd = new FormData(); [...list].forEach(f => fd.append("files", f)); if ($("#forced").value) fd.append("source", $("#forced").value);
-    const res = await api("/api/files", {method: "POST", body: fd});
-    res.forEach(r => toast(r.ok ? `${r.filename} → ${r.label} (${r.records} records)` : `${r.filename}: ${r.error}`));
-    await routes.ingest(); $("#result").innerHTML = res.map(r => `<div class="card" style="margin-bottom:6px">${r.ok ? `✓ <b>${esc(r.filename)}</b> recognised as <b>${esc(r.label)}</b> — ${r.records} records` : `✗ <b>${esc(r.filename)}</b>: ${esc(r.error)}`}</div>`).join("");
-  };
-  drop.ondragover = e => { e.preventDefault(); drop.classList.add("over"); };
-  drop.ondragleave = () => drop.classList.remove("over");
-  drop.ondrop = e => { e.preventDefault(); drop.classList.remove("over"); send(e.dataTransfer.files); };
-  $("#pick").onchange = e => send(e.target.files);
-  $("#process").onclick = async () => { const s = await api("/api/process", {method: "POST"}); showProcessed(s); };
-  $("#sample").onclick = async () => { const s = await api("/api/load-sample", {method: "POST"}); await routes.ingest(); showProcessed(s); };
-  $("#reset").onclick = async () => { if (!window.__resetArmed) { window.__resetArmed = true; $("#reset").textContent = "Click again to confirm"; return; } window.__resetArmed = false; await api("/api/reset", {method: "POST"}); toast("Cleared"); router(); };
-  document.querySelectorAll("[data-deact]").forEach(b => b.onclick = async () => { await api("/api/files/" + b.dataset.deact, {method: "DELETE"}); router(); });
-};
-function mappingNotes(n) {
-  if (n.pages) return n.pages.map(p => `Page ${p.page}: <b>${esc(nice((p.facility || "?").toUpperCase()))}</b>, ${p.staff_rows} staff × ${p.days} days${Object.keys(p.legend || {}).length ? `, legend ${Object.entries(p.legend).map(([k, v]) => k + "=" + v + "h").join(" ")}` : ", no legend"}`).join("<br>");
-  const parts = [];
-  const renamed = Object.entries(n.mapping || {}).filter(([f, h]) => f !== h);
-  parts.push(`${Object.keys(n.mapping || {}).length} fields mapped`);
-  if (renamed.length) parts.push("renamed: " + renamed.map(([f, h]) => `<span class="mono">${esc(h)}→${esc(f)}</span>`).join(", "));
-  if ((n.missing_fields || []).length) parts.push(`<span style="color:var(--warn)">missing: ${n.missing_fields.map(esc).join(", ")}</span>`);
-  if ((n.unmapped_columns || []).length) parts.push(`kept raw: ${n.unmapped_columns.map(esc).join(", ")}`);
-  return parts.join("<br>");
-}
-function showProcessed(s) {
-  $("#result").innerHTML = `<div class="card"><h3>Processed</h3><div class="grid g4">
-    ${metric(s.entities, s.entity_label.toLowerCase() + "s resolved", s.unverified_entities ? s.unverified_entities + " unverified found outside " + esc(s.anchor_label) : "")}
-    ${metric(s.records, "records ingested", s.metrics.records_linked + "% linked to verified " + s.entity_label.toLowerCase() + "s")}
-    ${metric(s.open_issues, "issues detected", `${s.by_severity.critical} critical · ${s.by_severity.warning} warning`)}
-    ${metric(s.metrics.fields_agreeing + "%", "fields agree across sources", "")}</div>
-    <div style="margin-top:10px"><a class="btn primary" href="#/issues">Open review queue →</a></div></div>`;
-  refreshSummary();
-}
+    <h2>1. Your files</h2>
+    <p class="sub">One file per system. We match the same ${esc(S.entity_label.toLowerCase())}s across them.</p>
+    ${filesList(files)}
 
-// ------------------------------------------------------------------ entities
-routes.entities = async (key) => {
-  if (key) return entityPage(key);
-  const ents = await api("/api/entities");
-  if (!ents.length) { $("#main").innerHTML = `<h1>Source of truth</h1><div class="card empty-state">Nothing ingested yet.</div>`; return; }
-  const srcs = Object.keys((CFG = CFG || await api("/api/config")).parsed.sources);
-  const COLS = CFG.parsed.entity.columns || Object.keys(CFG.parsed.attributes).filter(a => a !== "name").slice(0, 3);
-  const st = a => a && a.status === "CONFLICT" ? ` <span class="badge b-CONFLICT">conflict</span>` : a && a.status === "RESOLVED" ? ` <span class="badge b-RESOLVED">resolved</span>` : "";
-  $("#main").innerHTML = `<h1>Source of truth</h1><div class="sub">One row per real person, reconciled across every system. Click a row for its evidence.</div>
-  <div class="row" style="margin-bottom:10px"><input id="q" placeholder="Search name, ID, role, facility…" style="width:320px"><span class="spacer"></span><a class="btn small" href="/api/export/entities.csv">Export CSV</a></div>
-  <div class="tbl"><table id="et"><tr><th>${esc(SUMMARY.entity_label)}</th><th>Status</th>${COLS.map(c => `<th>${esc(c.replace(/_/g, " "))}</th>`).join("")}<th>Found in</th><th>Open issues</th></tr>
-  ${ents.map(e => `<tr class="click" data-k="${esc(e.key)}" data-s="${esc((e.display_name + " " + e.key + " " + Object.values(e.attrs).map(a => a.value || "").join(" ")).toLowerCase())}">
-    <td><b>${esc(e.display_name)}</b><br><span class="muted mono">${esc(e.key)}</span></td>
-    <td>${badge(e.status)}</td>
-    ${COLS.map(c => `<td>${esc(nice(e.attrs[c]?.value))}${st(e.attrs[c])}</td>`).join("")}
-    <td>${srcs.map(s => `<span class="chip ${e.sources[s] ? "on" : ""}" title="${s}">${SRC_SHORT[s] || s}</span>`).join("")}</td>
-    <td>${e.open_issues ? badge(e.open_issues + " open", e.worst) : `<span class="badge b-ok">clean</span>`}</td></tr>`).join("")}</table></div>`;
-  document.querySelectorAll("#et tr.click").forEach(tr => tr.onclick = () => location.hash = "#/entities/" + encodeURIComponent(tr.dataset.k));
-  $("#q").oninput = e => { const q = e.target.value.toLowerCase(); document.querySelectorAll("#et tr.click").forEach(tr => tr.style.display = tr.dataset.s.includes(q) ? "" : "none"); };
+    ${cards ? `<h2>2. Your questions, answered</h2><p class="sub">Click a card for the details.</p>
+      <div class="grid g3">${cards}</div>` : ""}
+
+    <h2>${cards ? "3. " : "2. "}To-do</h2>
+    <p class="sub">Things where the systems disagree or something looks wrong. Click one to see why and decide.</p>
+    <div id="todo"></div>`;
+  $("#main").querySelectorAll("[data-open]").forEach(el => el.onclick = () => DRAWERS[el.dataset.open](el.dataset.arg));
+  bindFiles($("#main"));
+  renderTodo(issues);
 };
 
-async function entityPage(key) {
-  const d = await api("/api/entities/" + encodeURIComponent(key));
-  const e = d.entity, L = d.labels;
-  const attrs = Object.entries(e.attrs);
-  $("#main").innerHTML = `
-  <a href="#/entities">← Source of truth</a>
-  <div class="row" style="margin:8px 0 4px"><h1>${esc(e.display_name)}</h1><span class="mono muted">${esc(e.key)}</span>${badge(e.status)}</div>
-  <div class="sub">${e.status === "verified" ? `Anchored to the ${esc(SUMMARY.anchor_label)}.` : `Not in the ${esc(SUMMARY.anchor_label)} — assembled from other systems by name.`} Every value below shows which system said what.</div>
-  <h2>Canonical record & lineage</h2>
-  <div class="grid g3">${attrs.map(([a, v]) => attrCard(a, v, L)).join("")}</div>
-  <h2>Issues</h2>
-  ${d.issues.map(issueCard).join("") || `<div class="card muted">No issues.</div>`}
-  <div class="grid g2" style="margin-top:8px">
-    <div><h2>Source records</h2>${recordsTable(d.records)}</div>
-    <div><h2>What changed</h2><div class="card"><div class="timeline">${d.timeline.map(t => `<div class="ev ${t.kind}"><div class="muted" style="font-size:11.5px">${esc(t.at.replace("T", " "))}</div>${esc(t.message)}</div>`).join("")}</div></div></div>
-  </div>`;
-  bindIssues();
-}
-function attrCard(a, v, L) {
-  const srcs = Object.entries(v.sources || {});
-  const lineage = srcs.map(([s, vals]) => vals.map(x => {
-    const bad = v.status === "CONFLICT" && x !== v.value || v.status === "RESOLVED" && x !== v.value;
-    return `<div class="src">${esc(L[s] || s)}</div><div class="wire ${bad ? "bad" : ""}"></div><div class="v ${bad ? "bad" : ""} ${s === v.authority ? "auth" : ""}">${esc(nice(x))}</div>`;
-  }).join("")).join("");
-  return `<div class="attr"><div class="row"><span class="name">${esc(a.replace(/_/g, " "))}</span><span class="spacer"></span>${badge(v.status)}</div>
-    <div class="val">${esc(nice(v.value))}</div>
-    ${lineage ? `<div class="lineage">${lineage}</div>` : `<div class="muted">No source provides this.</div>`}
-    ${v.authority ? `<div class="muted" style="font-size:11.5px;margin-top:6px">Authority: ${esc(L[v.authority] || v.authority)} (outlined)</div>` : ""}
-    ${v.note ? `<div style="font-size:12px;margin-top:4px">${esc(v.note)}</div>` : ""}</div>`;
-}
-function recordsTable(recs) {
-  return `<div class="tbl"><table><tr><th>Source</th><th>Where</th><th>Linked by</th></tr>${recs.slice(0, 40).map(r => `<tr>
-    <td>${esc(r.label)}<details><summary class="muted">raw</summary><pre style="max-height:200px">${esc(JSON.stringify(r.raw, null, 1))}</pre></details></td>
-    <td class="muted">${esc(r.filename)}<br>${esc(r.locator)}</td>
-    <td>${badge(r.match_status)}<br><span class="muted" style="font-size:12px">${esc(r.match_method || "")}${r.match_score != null && r.match_status !== "anchor" ? " · " + Math.round(r.match_score * 100) + "%" : ""}</span></td></tr>`).join("")}</table></div>
-    ${recs.length > 40 ? `<div class="muted">+ ${recs.length - 40} more</div>` : ""}`;
+function emptyState() {
+  $("#main").innerHTML = `<h1>Welcome</h1>
+  <p class="lead">Upload the exports from each of your systems. TruthLayer lines up the same people across them, shows where the systems disagree, and makes a short to-do list.</p>
+  <div class="drop" style="margin-top:20px"><div style="font-size:17px;font-weight:600;margin-bottom:4px">Drop your files here</div>
+    <div class="muted" style="margin-bottom:16px">CSV, Excel or PDF. We recognise which system each one came from.</div>
+    <button class="btn primary" onclick="pickFiles()">Choose files</button></div>
+  <h2>What we're expecting</h2>${filesList([])}`;
+  bindFiles($("#main"));
 }
 
-// ------------------------------------------------------------------ issues
-let issueFilter = {status: "open", severity: "", category: ""};
-routes.issues = async () => {
-  const qs = new URLSearchParams(Object.fromEntries(Object.entries(issueFilter).filter(([, v]) => v)));
-  const list = await api("/api/issues?" + qs);
-  const cats = Object.keys(SUMMARY.by_category);
-  const sel = (k, opts) => `<select data-f="${k}">${opts.map(([v, l]) => `<option value="${v}" ${issueFilter[k] === v ? "selected" : ""}>${l}</option>`).join("")}</select>`;
-  $("#main").innerHTML = `<h1>Review queue</h1><div class="sub">Everything the system could not settle on its own. Decisions are recorded and survive re-ingestion; if the underlying data changes, the issue reopens.</div>
-  <div class="row" style="margin-bottom:12px">
-    ${sel("status", [["open", "Open"], ["", "All"], ["resolved", "Resolved"], ["acknowledged", "Acknowledged"], ["dismissed", "Dismissed"]])}
-    ${sel("severity", [["", "All severities"], ["critical", "Critical"], ["warning", "Warning"], ["info", "Info"]])}
-    ${sel("category", [["", "All categories"], ...cats.map(c => [c, c])])}
-    <span class="muted">${list.length} shown</span><span class="spacer"></span>
-    Reviewer <input id="rev" value="${esc(reviewer)}" placeholder="your name" style="width:140px">
-    <a class="btn small" href="/api/export/issues.csv">Export CSV</a></div>
-  ${list.map(issueCard).join("") || `<div class="card empty-state">Nothing here.</div>`}`;
-  document.querySelectorAll("[data-f]").forEach(s => s.onchange = () => { issueFilter[s.dataset.f] = s.value; routes.issues(); });
-  $("#rev").onchange = e => { reviewer = e.target.value; try { localStorage.setItem("tl_reviewer", reviewer); } catch (err) {} };
-  bindIssues();
-};
-function issueCard(i) {
-  const ev = i.data.evidence || [];
-  const open = i.status === "open";
-  const opts = i.data.options || [];
-  const btns = !open ? `<button class="btn small" data-act="reopen" data-id="${i.id}">Reopen</button>` :
-    i.rule === "conflict" ? opts.map(o => `<button class="btn small" data-act="choose" data-val="${esc(o)}" data-id="${i.id}">Use ${esc(nice(o))}</button>`).join("") + `<button class="btn small" data-act="acknowledge" data-id="${i.id}">Keep open, note it</button>` :
-    i.rule === "match" ? `<button class="btn small primary" data-act="confirm" data-id="${i.id}">Same person</button><button class="btn small" data-act="reject" data-id="${i.id}">Different person</button>` :
-    `<button class="btn small" data-act="acknowledge" data-id="${i.id}">Acknowledge</button><button class="btn small" data-act="dismiss" data-id="${i.id}">Not an issue</button>`;
-  return `<div class="issue sev-${i.severity} ${open ? "" : "closed"}">
-    <div class="row"><span class="t">${esc(i.title)}</span>${badge(i.severity, i.severity)}<span class="badge info">${esc(i.category)}</span>${open ? "" : badge(i.status)}<span class="spacer"></span>
-      ${i.entity_key ? `<a href="#/entities/${encodeURIComponent(i.entity_key)}">${esc(i.entity_name || i.entity_key)} →</a>` : ""}</div>
-    <div class="meta">first seen ${esc((i.first_seen || "").replace("T", " "))}${i.attribute ? " · field " + esc(i.attribute) : ""}</div>
-    <div>${esc(i.detail)}</div>
-    <div class="muted" style="margin-top:4px"><b>Recommended:</b> ${esc(i.action)}</div>
-    ${ev.length ? `<details><summary>Evidence (${ev.length} record${ev.length > 1 ? "s" : ""})</summary><div class="tbl" style="margin-top:6px"><table>
-      <tr><th>Source</th><th>File / location</th><th>Value as received</th><th>Normalized</th></tr>
-      ${ev.map(x => `<tr><td>${esc(x.label || x.source)}</td><td class="muted">${esc(x.file || "")} ${esc(x.locator || "")}</td>
-      <td class="mono">${esc(typeof x.raw === "object" ? Object.entries(x.raw).map(([k, v]) => k + "=" + v).join("  ") : x.raw)}</td><td class="mono">${esc(x.value ?? "")}</td></tr>`).join("")}</table></div></details>` : ""}
-    <div class="row" style="margin-top:10px">${btns}<input placeholder="note (optional)" data-note="${i.id}" style="flex:1;min-width:160px;max-width:340px;padding:3px 8px"></div></div>`;
+function filesList(files) {
+  const active = files.filter(f => f.active);
+  return `<div class="files">${Object.entries(CFG.parsed.sources).map(([k, s]) => {
+    const f = active.find(x => x.source === k);
+    return f ? `<div class="file"><span class="dot d-green"></span><span class="name">${esc(s.label)}</span>
+        <span class="meta">${esc(f.filename)} · ${f.row_count} rows · added ${esc(when(f.uploaded_at))}</span>
+        <span class="acts"><button class="btn small quiet" data-replace="${k}">Replace</button><button class="btn small quiet danger" data-remove="${f.id}">Remove</button></span></div>`
+      : `<div class="file missing"><span class="dot d-gray"></span><span class="name">${esc(s.label)}</span><span class="meta faint">No file yet</span>
+        <span class="acts"><button class="btn small" data-replace="${k}">Upload</button></span></div>`;
+  }).join("")}
+  <div class="file" style="grid-template-columns:1fr auto"><span class="muted small">Tip: you can also drag files anywhere onto this page.</span><button class="btn small primary" data-upload>Upload files</button></div></div>`;
 }
-function bindIssues() {
-  document.querySelectorAll("[data-act]").forEach(b => b.onclick = async () => {
-    const note = (document.querySelector(`[data-note="${b.dataset.id}"]`) || {}).value || null;
-    b.disabled = true;
-    try {
-      await api(`/api/issues/${b.dataset.id}/resolve`, {method: "POST", headers: {"Content-Type": "application/json"},
-        body: JSON.stringify({decision: b.dataset.act, value: b.dataset.val || null, note, reviewer: reviewer || null})});
-      toast("Decision recorded"); router();
-    } catch (e) { toast(e.message); b.disabled = false; }
+function bindFiles(root) {
+  root.querySelectorAll("[data-replace]").forEach(b => b.onclick = () => pickFiles(b.dataset.replace));
+  root.querySelectorAll("[data-upload]").forEach(b => b.onclick = () => pickFiles());
+  root.querySelectorAll("[data-remove]").forEach(b => b.onclick = () => removeFile(b.dataset.remove, b));
+}
+
+/* ---------- three summary cards: one number, one sentence */
+function credCard(c) {
+  const k = c.counts, expired = k.expired || 0, soon = k.expiring || 0, shaky = (k.unverified || 0) + (k.conflict || 0) + (k.missing || 0) + (k.stale || 0);
+  const big = expired ? `${expired} expired` : soon ? `${soon} expiring` : "All current";
+  return `<div class="card sum" data-open="cred"><div class="label">Licenses</div>
+    <div class="big" style="${expired ? "color:var(--red)" : ""}">${big}</div>
+    <div class="says">${expired ? `${plural(expired, "person is", "people are")} working with an expired license.` : soon ? `Expiring in the next ${c.warn_days} days.` : `No one is expired or close to it.`}</div>
+    <div class="extra">${[soon && expired ? `${soon} more expiring soon` : "", shaky ? `${shaky} to double-check` : "", `${k.valid || 0} fine`].filter(Boolean).join(" · ")}</div>
+    <div class="go">See all licenses →</div></div>`;
+}
+function staffCard(s) {
+  if (!s.total_paid) return `<div class="card sum"><div class="label">State staffing report</div>
+    <div class="big" style="color:var(--faint)">—</div><div class="says">Upload the payroll file to see this.</div></div>`;
+  const ready = s.report_ready_pct ?? 0;
+  return `<div class="card sum" data-open="staff"><div class="label">State staffing report</div>
+    <div class="big">${ready}%</div>
+    <div class="says">of paid hours are ready to report.</div>
+    <div class="bar"><i style="width:${ready}%"></i></div>
+    <div class="extra">${num(s.total_flagged)} of ${num(s.total_paid)} hours need a check first.</div>
+    <div class="go">See hours by week →</div></div>`;
+}
+function covCard(c) {
+  if (!Object.keys(c.facilities).length) return `<div class="card sum"><div class="label">Hospital referrals</div>
+    <div class="big" style="color:var(--faint)">—</div><div class="says">Upload the staff schedule to see this.</div></div>`;
+  const f = Object.entries(c.facilities), ready = f.reduce((a, [, d]) => a + d.ready, 0), total = f.reduce((a, [, d]) => a + d.total, 0);
+  return `<div class="card sum" data-open="cov"><div class="label">Hospital referrals</div>
+    <div class="big">${ready} <span style="font-size:20px;color:var(--muted);font-weight:500">of ${total}</span></div>
+    <div class="says">shifts this week have a cleared nurse on duty.</div>
+    <div class="extra">${f.map(([n, d]) => `${esc(val(n))} ${d.ready}/${d.total}`).join(" · ")}</div>
+    <div class="go">See the shift calendar →</div></div>`;
+}
+
+/* ---------- to-do: one flat list, most urgent first */
+function renderTodo(issues) {
+  const order = {critical: 0, warning: 1, info: 2};
+  const open = issues.filter(i => i.status === "open").sort((a, b) => order[a.severity] - order[b.severity]);
+  const urgent = open.filter(i => i.severity === "critical"), done = issues.filter(i => i.status !== "open");
+  const list = todoTab === "urgent" ? urgent : todoTab === "done" ? done : open;
+  const shown = todoAll ? list : list.slice(0, 8);
+  $("#todo").innerHTML = `<div class="tabs">
+      <button class="${todoTab === "open" ? "on" : ""}" data-tab="open">All open (${open.length})</button>
+      <button class="${todoTab === "urgent" ? "on" : ""}" data-tab="urgent">Urgent (${urgent.length})</button>
+      <button class="${todoTab === "done" ? "on" : ""}" data-tab="done">Done (${done.length})</button></div>
+    <div class="todo">${shown.map(i => issueItem(i, false, true)).join("") || `<div class="empty">${todoTab === "done" ? "Nothing decided yet." : "Nothing here."}</div>`}
+      ${list.length > shown.length ? `<div class="more"><a id="showall">Show all ${list.length}</a></div>` : ""}</div>
+    <div class="row small muted" style="margin-top:10px;gap:16px"><span class="row" style="gap:6px"><span class="dot d-red"></span>Urgent</span><span class="row" style="gap:6px"><span class="dot d-amber"></span>Should check</span><span class="row" style="gap:6px"><span class="dot d-gray"></span>For your info</span></div>`;
+  $("#todo").querySelectorAll("[data-tab]").forEach(b => b.onclick = () => { todoTab = b.dataset.tab; todoAll = false; renderTodo(issues); });
+  if ($("#showall")) $("#showall").onclick = () => { todoAll = true; renderTodo(issues); };
+  bindActions($("#todo"));
+}
+
+function issueItem(i, expanded, showWho) {
+  const d = i.data || {}, ev = d.evidence || [], open = i.status === "open";
+  let acts = "";
+  if (!open) acts = `<span class="muted small">${i.status === "auto" ? `Auto-resolved by rule: <b>${esc((d.auto_rule || {}).label || "")}</b>` : i.status === "resolved" ? "Decided" : i.status === "dismissed" ? "Marked as not a problem" : "Noted"}.</span>
+                     <button class="btn small" data-act="reopen" data-id="${i.id}">Undo</button>${(i.status === "dismissed" || i.status === "acknowledged") && i.severity !== "critical" ? ` <button class="btn small quiet" data-mkrule="${i.status === "dismissed" ? "dismiss" : "acknowledge"}" data-id="${i.id}">Make it a rule</button>` : ""}`;
+  else if (i.rule === "conflict") {
+    const by = {};
+    ev.forEach(e => (by[e.value] ||= new Set()).add(e.label || LABELS[e.source] || e.source));
+    acts = `<span class="small muted">Which is right?</span>` + (d.options || []).map(o => `<button class="btn small" data-act="choose" data-val="${esc(o)}" data-id="${i.id}"
+             title="${by[o] ? "Said by " + esc([...by[o]].join(", ")) : ""}">${esc(val(o))}${by[o] ? ` <span class="faint">(${esc([...by[o]].join(", "))})</span>` : ""}</button>`).join("")
+         + `<button class="btn small quiet" data-act="acknowledge" data-id="${i.id}">Not sure yet</button>`;
+  } else if (i.rule === "match") {
+    acts = `<button class="btn small primary" data-act="confirm" data-id="${i.id}">Yes, same person</button>
+            <button class="btn small" data-act="reject" data-id="${i.id}">No, different person</button>`;
+  } else {
+    acts = `<button class="btn small" data-act="acknowledge" data-id="${i.id}">I'll handle it</button>
+            <button class="btn small quiet" data-act="dismiss" data-id="${i.id}">Not a problem</button>`;
+  }
+  const who = showWho && i.entity_name && !i.title.includes(i.entity_name) ? ` <span class="who">· ${esc(i.entity_name)}</span>` : "";
+  return `<details class="item ${open ? "" : "done"}" ${expanded ? "open" : ""}>
+    <summary><span class="dot ${open ? SEV_DOT[i.severity] : "d-green"}"></span><span class="t">${prose(i.title)}${who}</span><span class="chev">›</span></summary>
+    <div class="body">
+      <p class="detail">${prose(i.detail)}</p>
+      <div class="next">${esc(i.action)}</div>
+      ${evidenceTable(ev)}
+      <div class="acts">${acts}${showWho && i.entity_key ? `<span class="spacer"></span><a class="small" data-person="${esc(i.entity_key)}">Open ${esc(i.entity_name || i.entity_key)}'s profile →</a>` : ""}</div>
+    </div></details>`;
+}
+function evidenceTable(ev) {
+  if (!ev.length) return "";
+  return `<details class="ev"><summary>Show the original records (${ev.length})</summary><div class="tbl"><table>
+    <tr><th>System</th><th>File</th><th>What it said</th></tr>
+    ${ev.map(x => `<tr><td>${esc(x.label || LABELS[x.source] || x.source)}</td><td class="muted">${esc(x.file || "")}, ${esc(x.locator || "")}</td>
+      <td>${typeof x.raw === "object" ? Object.entries(x.raw).map(([k, v]) => `<span class="faint">${esc(k.replace(/_/g, " "))}</span> ${esc(v)}`).join(" &nbsp; ") : esc(x.raw)}</td></tr>`).join("")}
+    </table></div></details>`;
+}
+function bindActions(root) {
+  root.querySelectorAll("[data-act]").forEach(b => b.onclick = async e => {
+    e.stopPropagation(); b.disabled = true;
+    try { await wpost(`/issues/${b.dataset.id}/resolve`, {decision: b.dataset.act, value: b.dataset.val || null, reviewer: reviewer || null});
+          toast(b.dataset.act === "reopen" ? "Undone" : "Saved"); await refresh();
+          if (b.dataset.act === "dismiss" || b.dataset.act === "acknowledge") offerRule(b.dataset.id, b.dataset.act); }
+    catch (err) { toast(esc(err.message)); b.disabled = false; }
   });
+  root.querySelectorAll("[data-mkrule]").forEach(b => b.onclick = e => { e.preventDefault(); e.stopPropagation(); offerRule(b.dataset.id, b.dataset.mkrule); });
+  root.querySelectorAll("[data-person]").forEach(a => a.onclick = e => { e.preventDefault(); e.stopPropagation(); personDrawer(a.dataset.person); });
 }
 
-// ------------------------------------------------------------------ staffing
-routes.staffing = async () => {
-  const s = await api("/api/views/staffing");
-  if (!s || !s.rows.length) { $("#main").innerHTML = `<h1>Staffing report</h1><div class="card empty-state">Load payroll to build this report.</div>`; return; }
-  $("#main").innerHTML = `<h1>Staffing report</h1>
-  <div class="sub">Paid hours by week, facility and role (role from the source of truth, not the payroll job code), checked against the posted schedule. This is the input to the quarterly state staffing submission; flagged hours are the ones someone must confirm first.</div>
-  <div class="grid g3">${metric(fmt(s.total_paid), "Paid hours")}${metric(fmt(s.total_flagged), "Hours with an open question")}${pct(s.report_ready_pct, "Report-ready", "Share of paid hours with no open question attached.")}</div>
-  <div class="row" style="margin:14px 0 8px"><span class="spacer"></span><a class="btn small" href="/api/export/staffing.csv">Export report CSV</a></div>
-  <div class="tbl"><table><tr><th>Week</th><th>Facility</th><th>Role</th><th>Staff</th><th>Paid h</th><th>Scheduled h</th><th>Flagged h</th><th>Why flagged</th></tr>
-  ${s.rows.map(r => `<tr><td>${r.period_start.slice(5)} – ${r.period_end.slice(5)}</td><td>${esc(nice(r.facility))}</td><td>${esc(r.role)}</td><td>${r.headcount}</td>
-    <td><b>${fmt(r.paid_hours)}</b></td><td>${r.scheduled_hours == null ? `<span class="muted">no schedule</span>` : fmt(r.scheduled_hours) + (Math.abs(r.scheduled_hours - r.paid_hours) > .5 ? ` <span class="badge warning">${r.paid_hours - r.scheduled_hours > 0 ? "+" : ""}${fmt(r.paid_hours - r.scheduled_hours)}</span>` : "")}</td>
-    <td>${r.flagged_hours ? `<span class="badge warning">${fmt(r.flagged_hours)}</span>` : `<span class="badge b-ok">0</span>`}</td>
-    <td class="muted" style="font-size:12px">${r.reasons.map(esc).join("<br>")}</td></tr>`).join("")}</table></div>`;
+/* ============================================================ detail panels */
+const DRAWERS = {
+  async cred() {
+    const c = await wapi("/views/credentials");
+    const groups = [["expired", "Expired", "These people shouldn't be working until it's renewed."],
+      ["conflict", "Systems disagree", "HR and the licensing service have different details."],
+      ["missing", "No license on file", "Their role needs one."],
+      ["unverified", "Can't be verified", "The licensing service has no record of them."],
+      ["expiring", `Expiring in the next ${c.warn_days} days`, "Time to start renewal."],
+      ["stale", "Not checked recently", "Re-check with the licensing service."],
+      ["valid", "Fine", ""]];
+    const body = groups.map(([k, label, hint]) => {
+      const rows = c.rows.filter(r => r.status === k);
+      if (!rows.length) return "";
+      return `<h3>${label} <span class="faint" style="font-weight:400">${rows.length}</span></h3>
+        ${hint ? `<div class="muted small" style="margin:-2px 0 8px">${hint}</div>` : ""}
+        <div class="tbl"><table><tr><th>Person</th><th>License</th><th>Expires</th><th>Last checked</th></tr>
+        ${rows.map(r => `<tr class="click" data-person="${esc(r.entity_key)}">
+          <td>${esc(r.name)}<div class="small muted">${esc(r.role || "")}, ${esc(val(r.facility))}</div></td>
+          <td class="mono">${esc(r.license_number || "—")}</td>
+          <td>${esc(val(r.expiration))}<div class="small muted">${r.days_left == null ? "" : r.days_left < 0 ? `${-r.days_left} days ago` : `in ${r.days_left} days`}</div></td>
+          <td>${r.last_verified ? esc(val(r.last_verified)) : `<span class="muted">never</span>`}</td></tr>`).join("")}
+        </table></div>`;
+    }).join("");
+    openDrawer(`<h1>Licenses</h1><div class="muted">Expiry dates come from the licensing service. Click a person to see their full profile.</div>`, body, DRAWERS.cred);
+  },
+
+  async staff(week) {
+    const s = await wapi("/views/staffing");
+    const weeks = [...new Set(s.rows.map(r => r.period_start + "|" + r.period_end))].sort();
+    const withSched = weeks.filter(w => s.rows.some(r => r.period_start + "|" + r.period_end === w && r.scheduled_hours != null));
+    week = week || withSched[withSched.length - 1] || weeks[weeks.length - 1];
+    const rows = s.rows.filter(r => r.period_start + "|" + r.period_end === week);
+    const wk = w => { const [a, b] = w.split("|"); return `${shortDate(a)} – ${shortDate(b)}`; };
+    const body = `
+      <div class="row"><span class="muted small">Week</span><select id="wk">${weeks.map(w => `<option value="${w}" ${w === week ? "selected" : ""}>${wk(w)}${withSched.includes(w) ? "" : " (no schedule)"}</option>`).join("")}</select>
+        <span class="spacer"></span><a class="btn small" href="/api/w/${WS}/export/staffing.csv">Download report</a></div>
+      ${[...new Set(rows.map(r => r.facility))].map(f => `<h3>${esc(val(f))}</h3><div class="tbl"><table>
+          <tr><th>Role</th><th>Hours paid</th><th>Hours scheduled</th><th>Ready?</th></tr>
+          ${rows.filter(r => r.facility === f).map(r => {
+            const diff = r.scheduled_hours == null ? null : r.paid_hours - r.scheduled_hours;
+            return `<tr><td>${esc(r.role)} <span class="faint small">· ${plural(r.headcount, "person", "people")}</span></td><td>${num(r.paid_hours)}</td>
+              <td>${r.scheduled_hours == null ? `<span class="faint">—</span>` : num(r.scheduled_hours) + (Math.abs(diff) > .5 ? `<div class="small muted">${diff > 0 ? num(diff) + " more paid" : num(-diff) + " fewer paid"}</div>` : "")}</td>
+              <td>${r.flagged_hours ? `<span class="tag amber">${num(r.flagged_hours)} h to check</span><details class="ev"><summary>Why</summary><div class="small muted" style="margin-top:4px">${r.reasons.map(esc).join("<br>")}</div></details>`
+                                    : `<span class="tag green">Ready</span>`}</td></tr>`; }).join("")}
+          </table></div>`).join("")}
+      <p class="muted small" style="margin-top:16px">Roles come from each person's trusted profile, not the payroll job code.</p>`;
+    openDrawer(`<h1>State staffing report</h1><div class="muted">${s.report_ready_pct}% of ${num(s.total_paid)} paid hours are ready. The rest have an open question.</div>`, body, () => DRAWERS.staff(week));
+    $("#wk").onchange = e => DRAWERS.staff(e.target.value);
+  },
+
+  async cov() {
+    const c = await wapi("/views/coverage");
+    const dates = c.dates;
+    const body = `<div class="legend"><span><span class="dot d-green"></span>Nurse on duty</span><span><span class="dot d-amber"></span>Nurse on duty, but their license has a problem</span>
+        <span><span class="dot d-red"></span>No nurse on duty</span><span><span class="dot d-gray"></span>Nobody scheduled</span></div>
+      ${Object.entries(c.facilities).map(([f, d]) => `<h3>${esc(val(f))} <span class="faint" style="font-weight:400">${d.ready} of ${d.total} shifts covered</span></h3>
+        <div class="cov" style="grid-template-columns:64px repeat(${dates.length},minmax(0,1fr))">
+          <div></div>${dates.map(x => `<div class="h">${new Date(x + "T12:00").toLocaleDateString(undefined, {weekday: "short"})} ${shortDate(x).split(" ")[1]}</div>`).join("")}
+          ${c.bands.map(b => `<div class="h" style="text-align:left">${b}</div>${dates.map(x => { const cell = d.cells.find(k => k.date === x && k.band === b);
+            return `<div class="c ${cell.status}" title="${esc(cell.staff.map(p => p.name + " (" + p.role + ")" + (p.blocked.length ? " — " + p.blocked.join("; ") : "")).join("\n"))}">
+              ${cell.staff.map(p => `<div class="p ${p.blocked.length || p.unverified ? "blk" : ""}">${esc((p.name || "").split(" ")[0])} <span class="faint">${esc(p.role || "")}</span></div>`).join("")}</div>`; }).join("")}`).join("")}
+        </div>`).join("")}
+      <p class="muted small" style="margin-top:16px">Names in red are scheduled but don't count, because their license or record has a serious problem. Hover a cell for details.</p>`;
+    openDrawer(`<h1>Hospital referrals</h1><div class="muted">When a hospital calls: is a licensed nurse (${c.required_any.join(" or ")}) with a clean record on shift?</div>`, body, DRAWERS.cov);
+  },
 };
 
-// ------------------------------------------------------------------ credentials
-routes.credentials = async () => {
-  const c = await api("/api/views/credentials");
-  if (!c || !c.rows.length) { $("#main").innerHTML = `<h1>Credentials</h1><div class="card empty-state">No credential data yet.</div>`; return; }
-  const order = ["expired", "conflict", "missing", "unverified", "expiring", "stale", "valid"];
-  $("#main").innerHTML = `<h1>Credentials</h1><div class="sub">Every license, its authoritative expiration (licensing service), and what each system claims. As of ${c.as_of}; "expiring" means within ${c.warn_days} days.</div>
-  <div class="row" style="margin-bottom:12px">${order.filter(o => c.counts[o]).map(o => `${badge(c.counts[o] + " " + o, "b-" + o)}`).join(" ")}</div>
-  <div class="tbl"><table><tr><th>Person</th><th>Status</th><th>License</th><th>Expires</th><th>What each system says</th><th>Last verified</th><th>Open issues</th></tr>
-  ${c.rows.map(r => `<tr class="click" onclick="location.hash='#/entities/${encodeURIComponent(r.entity_key)}'">
-    <td><b>${esc(r.name)}</b><br><span class="muted">${esc(r.role || "")} · ${esc(nice(r.facility))}</span>${r.entity_status !== "verified" ? "<br>" + badge("not in HR", "warning") : ""}</td>
-    <td>${badge(r.status)}</td><td class="mono">${esc(r.license_number || "—")}</td>
-    <td>${esc(r.expiration || "—")}<br><span class="muted">${r.days_left == null ? "" : r.days_left < 0 ? -r.days_left + " days ago" : "in " + r.days_left + " days"}</span></td>
-    <td style="font-size:12px">${Object.entries(r.expiration_sources || {}).map(([s, v]) => `${SRC_SHORT[s] || s}: ${v.join(", ")}`).join("<br>")}</td>
-    <td>${esc(r.last_verified || "never")}${r.verified_age != null ? `<br><span class="muted">${r.verified_age} days ago</span>` : ""}</td>
-    <td style="font-size:12px">${r.issues.map(esc).join("<br>")}</td></tr>`).join("")}</table></div>`;
+async function personDrawer(key) {
+  const d = await wapi("/entities/" + encodeURIComponent(key));
+  const e = d.entity, open = d.issues.filter(i => i.status === "open");
+  const srcs = Object.keys(CFG.parsed.sources).filter(s => e.sources[s] || Object.values(e.attrs).some(a => a.sources && a.sources[s]));
+  const attrs = Object.entries(e.attrs).filter(([k, a]) => a.status !== "MISSING" || ["license_number", "license_expiration"].includes(k));
+  const cell = (a, s) => {
+    const vals = (a.sources || {})[s];
+    if (!vals) return `<td class="none">—</td>`;
+    const bad = (a.status === "CONFLICT" || a.status === "RESOLVED") && vals.some(v => v !== a.value);
+    return `<td class="${bad ? "bad" : ""}">${vals.map(val).map(esc).join(", ")}${a.authority === s ? `<span class="star" title="Trusted source">★</span>` : ""}</td>`;
+  };
+  const head = `<h1>${esc(e.display_name)}</h1>
+    <div class="muted">${e.status === "verified" ? `${esc(e.key)} · on the ${esc(ANCHOR)}` : `Not on the ${esc(ANCHOR)}`} · ${open.length ? plural(open.length, "thing") + " to check" : "nothing to check"}</div>`;
+  const body = `
+    ${open.length ? `<h3 style="margin-top:0">To-do</h3><div class="todo">${open.map((i, n) => issueItem(i, n === 0, false)).join("")}</div>` : ""}
+    <h3 style="${open.length ? "" : "margin-top:0"}">What each system says</h3>
+    <div class="muted small" style="margin:-2px 0 8px">Red means the system disagrees with our answer. ★ marks the system we trust for that field.</div>
+    <div class="tbl"><table class="cmp"><tr><th></th><th>Our answer</th>${srcs.map(s => `<th>${esc(LABELS[s])}</th>`).join("")}</tr>
+      ${attrs.map(([k, a]) => `<tr><td class="muted">${esc(attrName(k))}</td>
+        <td class="answer">${esc(val(a.value))}${a.status === "CONFLICT" || a.status === "RESOLVED" ? `<div><span class="tag ${ATTR_STATUS[a.status][1]}">${ATTR_STATUS[a.status][0]}</span></div>` : ""}</td>
+        ${srcs.map(s => cell(a, s)).join("")}</tr>`).join("")}
+    </table></div>
+    ${hoursTable(d.records)}
+    ${d.issues.some(i => i.status !== "open") ? `<h3>Already decided</h3><div class="todo">${d.issues.filter(i => i.status !== "open").map(i => issueItem(i, false, false)).join("")}</div>` : ""}
+    <details class="ev" style="margin-top:26px"><summary>History and how records were matched</summary>
+      <div class="grid g2" style="margin-top:12px"><div class="tbl"><table><tr><th>System</th><th>How we matched</th></tr>${matchSummary(d.records)}</table></div>
+      <div class="card"><div class="timeline">${d.timeline.map(t => `<div class="ev ${t.kind}"><div class="faint small">${esc(when(t.at))}</div>${esc(msg(t.message))}</div>`).join("")}</div></div></div>
+    </details>`;
+  openDrawer(head, body, () => personDrawer(key));
+}
+function matchSummary(recs) {
+  const M = {anchor: `Their ${ANCHOR} record`, auto: "Automatically", confirmed: "Confirmed by you", review: "Waiting for you to confirm", unverified: "Grouped by name"};
+  const g = {};
+  recs.forEach(r => { const k = r.source + "|" + r.match_status; (g[k] ||= {r, n: 0}).n++; });
+  return Object.values(g).map(({r, n}) => `<tr><td>${esc(r.label)} <span class="faint small">(${n})</span></td><td>${esc(M[r.match_status] || r.match_status)}
+    ${r.match_status === "auto" ? `<div class="small faint">by ${esc((r.match_method || "").replace(" (via fallback)", "").replace(/_/g, " "))}</div>` : ""}</td></tr>`).join("");
+}
+function hoursTable(recs) {
+  const rule = (CFG.parsed.rules || []).find(r => r.type === "aggregate_compare");
+  if (!rule) return "";
+  const A = rule.a, B = rule.b, unit = rule.unit || "", pre = rule.prefix || "";
+  const per = {};
+  recs.filter(r => r.source === A.source).forEach(r => { const k = r.norm[A.start] + "|" + r.norm[A.end]; (per[k] ||= {a: 0, b: 0, hasA: true}).a += +r.norm[A.measure] || 0; });
+  const bRecs = recs.filter(r => r.source === B.source);
+  if (!Object.keys(per).length && !bRecs.length) return "";
+  Object.keys(per).forEach(k => { const [s, t] = k.split("|"); bRecs.forEach(r => { const d = r.norm[B.date]; if (d >= s && d <= t) { per[k].b += +r.norm[B.measure] || 0; per[k].hasB = true; } }); });
+  const only = bRecs.filter(r => +r.norm[B.measure] && !Object.keys(per).some(k => { const [s, t] = k.split("|"); return r.norm[B.date] >= s && r.norm[B.date] <= t; }));
+  if (only.length) { const ds = only.map(r => r.norm[B.date]).sort(); per[ds[0] + "|" + ds[ds.length - 1]] = {a: 0, b: only.reduce((x, r) => x + (+r.norm[B.measure] || 0), 0), hasB: true}; }
+  const q = n => pre + num(n) + unit;
+  const av = A.verb || LABELS[A.source], bv = B.verb || LABELS[B.source];
+  return `<h3>${esc(av)} vs ${esc(bv.toLowerCase())}</h3><div class="tbl"><table><tr><th>Period</th><th>${esc(av)}</th><th>${esc(bv)}</th><th></th></tr>
+    ${Object.entries(per).sort().map(([k, v]) => { const [s, t] = k.split("|"); const diff = v.a - v.b;
+      return `<tr><td>${shortDate(s)} – ${shortDate(t)}</td><td>${v.hasA ? q(v.a) : `<span class="faint">—</span>`}</td><td>${v.hasB ? q(v.b) : `<span class="faint">—</span>`}</td>
+        <td class="small">${!v.hasB ? "" : Math.abs(diff) <= (rule.tolerance || 0) ? `<span style="color:var(--green)">Matches</span>` : `<span style="color:var(--amber)">${q(Math.abs(diff))} ${diff > 0 ? "more" : "less"} ${esc(av.toLowerCase())}</span>`}</td></tr>`; }).join("")}
+    </table></div>`;
+}
+
+/* ============================================================ PEOPLE */
+routes.people = async () => {
+  if (!S.records) return emptyState();
+  const [ents, issues] = await Promise.all([wapi("/entities"), wapi("/issues?status=open")]);
+  const byEnt = {};
+  issues.forEach(i => { if (i.severity === "info") return; (byEnt[i.entity_key] ||= []).push(i); (i.data.related || []).forEach(k => (byEnt[k] ||= []).push(i)); });
+  const cols = CFG.parsed.entity.columns || Object.keys(CFG.parsed.attributes).filter(a => a !== "name").slice(0, 3);
+  const rank = e => { const l = byEnt[e.key] || []; return l.some(i => i.severity === "critical") ? 0 : l.length ? 1 : 2; };
+  const rows = [...ents].sort((a, b) => rank(a) - rank(b) || a.display_name.localeCompare(b.display_name));
+  $("#main").innerHTML = `<h1>${esc(S.entity_label)}s</h1>
+    <p class="lead">One profile per ${esc(S.entity_label.toLowerCase())}, combined from all your systems. Click a name to compare what each system says.</p>
+    <div class="row" style="margin:18px 0 12px"><input id="q" placeholder="Search by name…" style="width:280px"><span class="spacer"></span><a class="btn small quiet" href="/api/w/${WS}/export/entities.csv">Download as CSV</a></div>
+    <div class="tbl"><table id="pt"><tr><th>Name</th>${cols.map(c => `<th>${esc(attrName(c))}</th>`).join("")}<th>Status</th></tr>
+      ${rows.map(e => { const l = byEnt[e.key] || []; const r = rank(e);
+        return `<tr class="click" data-person="${esc(e.key)}" data-s="${esc(e.display_name.toLowerCase() + " " + e.key.toLowerCase())}">
+        <td>${esc(e.display_name)}${e.status !== "verified" ? `<div class="small muted">Not on the ${esc(ANCHOR)}</div>` : ""}</td>
+        ${cols.map(c => `<td>${esc(val((e.attrs[c] || {}).value))}</td>`).join("")}
+        <td><span class="row" style="gap:8px"><span class="dot ${["d-red", "d-amber", "d-green"][r]}"></span>${r === 2 ? "All good" : plural(l.length, "thing") + " to check"}</span></td></tr>`; }).join("")}
+    </table></div>`;
+  bindActions($("#main"));
+  $("#q").oninput = ev => { const q = ev.target.value.toLowerCase(); document.querySelectorAll("#pt tr[data-s]").forEach(tr => tr.style.display = tr.dataset.s.includes(q) ? "" : "none"); };
 };
 
-// ------------------------------------------------------------------ coverage / referrals
-routes.coverage = async () => {
-  const c = await api("/api/views/coverage");
-  if (!c || !Object.keys(c.facilities).length) { $("#main").innerHTML = `<h1>Referral readiness</h1><div class="card empty-state">Load a schedule to see coverage.</div>`; return; }
-  const dates = c.dates;
-  $("#main").innerHTML = `<h1>Referral readiness</h1>
-  <div class="sub">When a hospital calls, the first question is "do we have the licensed staff to take this patient?". This grid answers it from trusted data:
-  a shift counts only if a ${c.required_any.join(" or ")} is on it <i>and</i> their record has no critical credential or identity problem.</div>
-  <div class="row" style="margin-bottom:12px">${badge("covered", "b-ok")} ${badge("nurse on shift but record has a critical issue", "b-at_risk")} ${badge("staff on, no licensed nurse", "b-gap")} ${badge("nobody scheduled", "b-empty")}</div>
-  ${Object.entries(c.facilities).map(([f, d]) => `<div class="card" style="margin-bottom:14px"><div class="row"><h3>${esc(nice(f))}</h3><span class="spacer"></span><b>${d.ready}/${d.total}</b>&nbsp;<span class="muted">shifts covered</span></div>
-    <div class="cov" style="grid-template-columns:70px repeat(${dates.length},minmax(0,1fr))">
-      <div></div>${dates.map(x => `<div class="h">${new Date(x + "T12:00").toLocaleDateString(undefined, {weekday: "short"})} ${x.slice(5)}</div>`).join("")}
-      ${c.bands.map(b => `<div class="h" style="text-align:left">${b}</div>${dates.map(x => { const cell = d.cells.find(k => k.date === x && k.band === b);
-        return `<div class="c ${cell.status}" title="${esc(cell.staff.map(p => p.name + " (" + p.role + ")" + (p.blocked.length ? " — " + p.blocked.join("; ") : "")).join("\n"))}">
-        ${cell.staff.map(p => `<div class="p ${p.blocked.length || p.unverified ? "blk" : ""}">${esc(p.role || "?")} ${esc((p.name || "").split(" ")[0])}</div>`).join("") || `<span class="muted">—</span>`}</div>`; }).join("")}`).join("")}
-    </div></div>`).join("")}`;
+/* ============================================================ HOW IT WORKS */
+routes.system = async () => {
+  const [files, events, tables, rules] = await Promise.all([wapi("/files"), wapi("/events?limit=200"), wapi("/tables"), wapi("/auto-rules")]);
+  const p = CFG.parsed, m = S.metrics;
+  const mapNote = n => {
+    if (n.pages) return n.pages.map(pg => `Page ${pg.page}: ${esc(val((pg.facility || "?").toUpperCase()))}, ${pg.staff_rows} people`).join("; ");
+    const ren = Object.entries(n.mapping || {}).filter(([f, h]) => f !== h);
+    return [ren.length ? "Renamed: " + ren.map(([f, h]) => `"${esc(h)}" → ${esc(f)}`).join(", ") : "All columns recognised",
+            (n.missing_fields || []).length ? `Missing: ${n.missing_fields.map(esc).join(", ")}` : "",
+            (n.unmapped_columns || []).length ? `Extra columns kept: ${n.unmapped_columns.map(esc).join(", ")}` : ""].filter(Boolean).join(" · ");
+  };
+  $("#main").innerHTML = `<h1>How it works</h1>
+    <p class="lead">The details behind the scenes: how each file was read, which system we trust for what, and a log of every change.</p>
+
+    <h2>How each file was read</h2>
+    <p class="sub">Files are stored exactly as received. Uploading a new file for the same system replaces the old one, and older versions are kept here.</p>
+    <div class="row" style="margin-bottom:10px"><button class="btn small primary" data-upload>Upload files</button><span class="spacer"></span><button class="btn small quiet danger" id="reset">Start over</button></div>
+    ${files.length ? `<div class="tbl"><table><tr><th>File</th><th>Read as</th><th>Rows</th><th>Columns</th><th></th></tr>
+      ${files.map(f => `<tr style="${f.active ? "" : "color:var(--faint)"}"><td>${esc(f.filename)}<div class="small faint">${esc(when(f.uploaded_at))}${f.active ? "" : " · replaced"}</div></td>
+        <td>${esc(f.label)}</td><td>${f.row_count}</td><td class="small">${mapNote(f.notes)}</td>
+        <td>${f.active ? `<button class="btn small quiet danger" data-remove="${f.id}">Remove</button>` : ""}</td></tr>`).join("")}</table></div>` : `<div class="card muted">No files yet.</div>`}
+
+    <h2>Which system we trust for what</h2>
+    <p class="sub">When systems disagree we never pick silently. We show the trusted system's value for now and add it to your to-do list.</p>
+    <div class="tbl"><table><tr><th>Field</th><th>Reported by</th><th>We trust</th></tr>
+      ${Object.entries(p.attributes).map(([a, s]) => `<tr><td>${esc(attrName(a))}</td><td class="muted">${Object.keys(s.from).map(k => esc(LABELS[k] || k)).join(", ")}</td>
+        <td>${(s.authority || []).map(k => esc(LABELS[k] || k)).join(", then ") || "—"}</td></tr>`).join("")}
+    </table></div>
+
+    <h2>Rules learned from your decisions</h2>
+    <p class="sub">When you resolve an issue, you can save it as a rule so similar issues resolve themselves. Urgent issues always need a person.</p>
+    ${rules.length ? `<div class="tbl"><table><tr><th>Rule</th><th>Made by</th><th>Resolving now</th><th></th></tr>
+      ${rules.map(r => `<tr style="${r.active ? "" : "color:var(--faint)"}"><td>${esc(r.label)}</td><td class="small">${esc(r.created_by || "Reviewer")}<div class="faint">${esc(when(r.created_at))}</div></td>
+        <td>${r.active ? r.applied : "off"}</td><td>${r.active ? `<button class="btn small quiet danger" data-rule-off="${r.id}">Switch off</button>` : ""}</td></tr>`).join("")}</table></div>`
+      : `<div class="card muted small">No rules yet. Resolve an issue with "Not a problem" or "I'll handle it" and you'll be offered one.</div>`}
+
+    <h2>How much the data agrees</h2>
+    <div class="grid g3" style="margin-top:10px">
+      ${[[m.records_linked, "of rows were matched to a known " + S.entity_label.toLowerCase()],
+         [m.fields_agreeing, "of profile fields agree across systems"],
+         [m.entities_without_critical, `of ${S.entity_label.toLowerCase()}s have nothing urgent`]].map(([v, l]) =>
+        `<div class="card"><div style="font-size:26px;font-weight:650">${v ?? "—"}%</div><div class="muted small">${l}</div></div>`).join("")}
+    </div>
+
+    <h2>Activity log</h2>
+    <div class="card" style="max-height:420px;overflow:auto;margin-top:10px"><div class="timeline">
+      ${events.map(t => `<div class="ev ${t.kind}"><div class="faint small">${esc(when(t.at))}</div>${esc(msg(t.message))}</div>`).join("") || "Nothing yet."}</div></div>
+
+    <h2>Your data as tables</h2>
+    <p class="sub">Each system's file can be queried like a normal table (for example <span class="mono">SELECT * FROM ${esc(tables[0] ? tables[0].name : "file_x")}</span>). These are read-only views; the files themselves are never changed.</p>
+    <div class="tbl"><table><tr><th>Table</th><th>From</th><th>Rows</th><th>Columns</th></tr>
+      ${tables.map(t => `<tr class="click" data-table="${esc(t.name)}"><td class="mono">${esc(t.name)}</td><td>${esc(t.label)}</td><td>${t.rows}</td>
+        <td class="small muted">${t.columns.filter(c => !["record_id", "file", "location", "linked_to"].includes(c)).map(esc).join(", ")}</td></tr>`).join("")}</table></div>
+
+    <h2>Setup for this company</h2>
+    <p class="sub">Everything specific to ${esc(p.client)} lives in its own setup. Another company, in any industry, gets its own; the engine doesn't change.</p>
+    <div class="row"><button class="btn small" id="resetup">Change setup</button><span class="spacer"></span><button class="btn small quiet danger" id="delco">Delete this company</button>
+      <details class="ev" style="margin:0"><summary>Show the setup file</summary><pre>${esc(CFG.yaml)}</pre></details></div>`;
+  $("#main").querySelectorAll("[data-table]").forEach(tr => tr.onclick = () => tableDrawer(tr.dataset.table));
+  $("#main").querySelectorAll("[data-rule-off]").forEach(b => b.onclick = async () => { await api(`/api/w/${WS}/auto-rules/${b.dataset.ruleOff}`, {method: "DELETE"}); toast("Rule switched off; its issues are open again."); refresh(); });
+  $("#delco").onclick = async () => { const b = $("#delco"); if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "Click again to delete " + S.client; return; }
+    await api(`/api/workspaces/${WS}`, {method: "DELETE"}); toast("Deleted"); location.hash = "#/"; };
+  $("#resetup").onclick = async () => { toast("Reading this company's current files…"); await wpost("/setup/from-current"); go("setup"); };
+  bindFiles($("#main"));
+  $("#reset").onclick = async () => { const b = $("#reset"); if (!b.dataset.armed) { b.dataset.armed = 1; b.textContent = "Click again to erase everything"; return; } await wpost("/reset"); toast("Cleared"); go(""); refresh(); };
 };
 
-// ------------------------------------------------------------------ audit
-routes.audit = async () => {
-  const ev = await api("/api/events?limit=300");
-  $("#main").innerHTML = `<h1>Audit log</h1><div class="sub">Append-only record of what was ingested, what was detected, and who decided what.</div>
-  <div class="card"><div class="timeline">${ev.map(t => `<div class="ev ${t.kind}"><div class="muted" style="font-size:11.5px">${esc(t.at.replace("T", " "))} · ${esc(t.kind.replace(/_/g, " "))}${t.entity_key ? ` · <a href="#/entities/${encodeURIComponent(t.entity_key)}">${esc(t.entity_key)}</a>` : ""}</div>${esc(t.message)}</div>`).join("") || "Nothing yet."}</div></div>`;
-};
+/* ============================================================ COMPANY PICKER */
+async function pickerPage() {
+  const d = await api("/api/workspaces");
+  const ws = d.workspaces.filter(w => !w.error);
+  $("#main").innerHTML = `
+    <h1>Your companies</h1>
+    <p class="lead">Each company gets its own space: its own files, setup, people or records, and a log of every problem found and every decision made. Nothing is shared between companies.</p>
+    <div class="companies" style="margin-top:22px">
+      ${ws.map(w => `<div class="card co" data-ws="${esc(w.slug)}">
+          <div class="nm">${esc(w.name)}</div>
+          <div class="meta">${esc(w.industry || "")}${w.configured ? `${w.industry ? " · " : ""}${w.entities} ${esc((w.entity_label || "record").toLowerCase())}s · ${w.sources} systems` : `${w.industry ? " · " : ""}not set up yet`}</div>
+          <div class="stat">${!w.configured ? `<span class="muted">Finish setup →</span>` : w.urgent ? `<span class="row" style="gap:6px"><span class="dot d-red"></span>${w.urgent} urgent · ${w.open_issues} open</span>`
+            : w.open_issues ? `<span class="row" style="gap:6px"><span class="dot d-amber"></span>${w.open_issues} to check</span>` : `<span class="row" style="gap:6px"><span class="dot d-green"></span>All good</span>`}</div>
+        </div>`).join("")}
+      <div class="card co new" id="newco"><div style="font-size:26px;line-height:1">+</div><div>Add a company</div></div>
+    </div>
+    <div id="newform"></div>
+    ${d.presets.filter(p => p.empty).map(p => `<div class="card co" data-preset="${p.id}" style="margin-top:14px;flex-direction:row;align-items:center;min-height:0;gap:16px">
+      <div style="flex:1"><div class="nm">Start with the ${esc(p.name)} setup, no data</div><div class="small muted">${esc(p.blurb)}</div></div>
+      <div style="color:var(--accent)">Create →</div></div>`).join("")}
+    <h2>Or open a demo company</h2>
+    <p class="sub">Each one is created fresh from sample files. The retail and manufacturing ones are set up automatically from their CSVs.</p>
+    <div class="grid g3">${d.presets.filter(p => !p.empty).map(p => `<div class="card co" data-preset="${p.id}"><div class="nm">${esc(p.name)}</div>
+      <div class="meta">${esc(p.industry)}</div><div class="small muted">${esc(p.blurb)}</div><div class="stat" style="color:var(--accent)">Create demo →</div></div>`).join("")}</div>`;
+  $("#main").querySelectorAll("[data-ws]").forEach(el => el.onclick = () => { location.hash = `#/c/${el.dataset.ws}/`; });
+  $("#main").querySelectorAll("[data-preset]").forEach(el => el.onclick = async () => {
+    toast("Creating the demo company…"); const w = await post("/api/workspaces", {preset: el.dataset.preset}); location.hash = `#/c/${w.slug}/`; });
+  $("#newco").onclick = () => {
+    $("#newform").innerHTML = `<div class="card" style="margin-top:14px"><h3>New company</h3>
+      <div class="row" style="margin-top:8px"><input id="coname" placeholder="Company name" style="width:280px">
+      <input id="coind" placeholder="Industry (optional)" style="width:200px"><button class="btn primary" id="cocreate">Create and set up</button></div></div>`;
+    $("#coname").focus();
+    const create = async () => { const name = $("#coname").value.trim(); if (!name) return $("#coname").focus();
+      const w = await post("/api/workspaces", {name, industry: $("#coind").value.trim()}); location.hash = `#/c/${w.slug}/setup`; };
+    $("#cocreate").onclick = create; $("#coname").onkeydown = e => { if (e.key === "Enter") create(); };
+  };
+}
 
-// ------------------------------------------------------------------ platform
-routes.platform = async () => {
-  CFG = await api("/api/config");
-  const p = CFG.parsed;
-  $("#main").innerHTML = `<h1>Platform config</h1>
-  <div class="sub">The engine is generic. Everything specific to ${esc(p.client)} is this one file (<span class="mono">${esc(CFG.file)}</span>). A new client in a different industry is a new file, not new code.</div>
-  <div class="grid g2">
-    <div class="card"><h3>Entity</h3><b>${esc(p.entity.label)}</b>, anchored to <b>${esc(p.sources[p.entity.anchor_source].label)}</b> by <span class="mono">${esc(p.entity.key_field)}</span>.
-      <h3 style="margin-top:14px">Sources</h3>${Object.entries(p.sources).map(([k, s]) => `<div style="margin-bottom:6px"><b>${esc(s.label)}</b> <span class="muted">(${s.format}${s.parser ? ", " + s.parser : ""})</span><br><span class="mono muted">${Object.keys(s.fields).join(", ")}</span>
-      <br><span style="font-size:12px">${k === p.entity.anchor_source ? "system of record" : s.match ? "linked by " + (s.match.by === "key" ? s.match.field + ", then name" : "name + " + Object.keys(s.match.hints || {}).join(", ")) : ""}</span></div>`).join("")}</div>
-    <div class="card"><h3>Who is authoritative for what</h3><div class="tbl"><table><tr><th>Attribute</th><th>Sources</th><th>Authority</th><th>On conflict</th></tr>
-      ${Object.entries(p.attributes).map(([a, s]) => `<tr><td>${esc(a)}</td><td>${Object.keys(s.from).map(k => SRC_SHORT[k] || k).join(", ")}</td><td><b>${(s.authority || []).map(k => SRC_SHORT[k] || k).join(" › ")}</b></td><td>${s.severity ? badge(s.severity, s.severity) : badge("warning", "warning")}</td></tr>`).join("")}</table></div>
-      <h3 style="margin-top:14px">Rules</h3>${p.rules.map(r => `<div><span class="mono">${esc(r.type)}</span> · ${esc(r.id)}</div>`).join("")}</div>
-  </div>
-  <h2>The file</h2><pre>${esc(CFG.yaml)}</pre>`;
+/* ============================================================ GUIDED SETUP */
+let SETUP = null;
+async function setupPage(info) {
+  $("#client").textContent = info.name;
+  SETUP = await wapi("/setup");
+  DROP = files => setupFiles(files, info);
+  renderSetup(info);
+}
+async function setupFiles(files, info) {
+  if (!files.length) return;
+  const fd = new FormData(); [...files].forEach(f => fd.append("files", f));
+  toast("Looking at your files…");
+  SETUP = await api(`/api/w/${WS}/setup/files`, {method: "POST", body: fd});
+  renderSetup(info);
+}
+function setupUpload(info) {
+  const inp = document.createElement("input"); inp.type = "file"; inp.multiple = true;
+  inp.onchange = () => setupFiles(inp.files, info);
+  inp.click();
+}
+function renderSetup(info) {
+  const ch = SETUP.choices, P = Object.fromEntries((SETUP.profiles || []).map(p => [p.sid, p]));
+  const filesHtml = (SETUP.profiles || []).map(p => `<div class="file" style="grid-template-columns:20px 1fr auto auto">
+      <span class="dot d-green"></span><span><b>${esc(p.filename)}</b> <span class="muted small">· ${p.rows} rows · ${p.columns.length} columns</span></span>
+      <span class="small muted">${ch && ch.master === p.sid ? "master list" : ""}</span>
+      <button class="btn small quiet danger" data-unstage="${esc(p.filename)}">Remove</button></div>`).join("")
+    + (SETUP.skipped || []).map(x => `<div class="file" style="grid-template-columns:20px 1fr"><span class="dot d-amber"></span><span><b>${esc(x.filename)}</b> <span class="small muted">· skipped: ${esc(x.reason)}</span></span></div>`).join("");
+  let html = `<h1>Set up ${esc(info.name)}</h1>
+    <p class="lead">Add an export from each system this company uses. We'll look at the columns and values, suggest how everything fits together, and you confirm it.</p>
+    <div class="step"><div class="n">1</div><div><h2>Add the files</h2><div class="sub">CSV, Excel or PDF (tables and printed schedules). One file per system: HR, CRM, billing, inventory, anything.</div></div></div>
+    <div class="files">${filesHtml || `<div class="empty">No files yet. Drop them anywhere on this page.</div>`}
+      <div class="file" style="grid-template-columns:1fr auto"><span class="muted small">You can drag files onto the page too.</span><button class="btn small primary" id="addsetup">Add files</button></div></div>`;
+  if (ch) {
+    const srcs = ch.sources, label = id => srcs[id] ? srcs[id].label : id, ent = ch.entity_label;
+    const col = (sid, f) => { const c = (P[sid] || {columns: []}).columns.find(c => c.field === f); return c ? c.header : f; };
+    const master = P[ch.master];
+    html += `
+    <div class="step"><div class="n">2</div><div><h2>What is this about?</h2><div class="sub">The master list is the file with one row per real thing. Everything else gets matched to it.</div></div></div>
+    <div class="choice">
+      <div class="row"><span>Master list</span><select id="smaster">${SETUP.profiles.map(p => `<option value="${p.sid}" ${p.sid === ch.master ? "selected" : ""}>${esc(p.filename)}</option>`).join("")}</select>
+        <span>· each row is a</span><input id="sent" value="${esc(ent)}" style="width:150px">
+        <span>· identified by</span><select id="skey">${master.columns.map(c => `<option value="${c.field}" ${c.field === ch.key ? "selected" : ""}>${esc(c.header)}</option>`).join("")}</select></div>
+      <div class="why" style="margin-top:8px">${master.name_spec ? `Names come from <b>${esc(Object.values(master.name_spec).map(f => col(master.sid, f)).join(" + "))}</b>.` : "No name column found; records are matched by ID only."}</div>
+    </div>
+
+    <div class="step"><div class="n">3</div><div><h2>How the other files connect</h2><div class="sub">We compared actual values between files to find these links.</div></div></div>
+    ${Object.entries(srcs).filter(([sid]) => sid !== ch.master).map(([sid, s]) => `<div class="choice">
+      <div class="row"><label style="margin:0"><input type="checkbox" data-sinc="${sid}" ${s.include ? "checked" : ""}> <b>${esc(s.filename)}</b></label>
+        <span class="muted small">called</span><input data-slabel="${sid}" value="${esc(s.label)}" style="width:180px;padding:3px 8px">
+        <span class="small muted">· ${s.kind === "activity" ? `a log of activity (several rows per ${esc(ent.toLowerCase())})` : `one row per ${esc(ent.toLowerCase())}`}</span></div>
+      ${s.links.length ? s.links.map((l, i) => `<label><input type="checkbox" data-link="${sid}|${i}" ${l.use ? "checked" : ""}>
+          <span>${l.type === "key" ? `Same <b>${esc(col(sid, l.column))}</b> as <b>${esc(col(ch.master, l.master_column))}</b> in ${esc(label(ch.master))}`
+                                     : `Same name (<b>${esc(col(sid, l.column))}</b>)`}
+          <span class="why">· ${Math.round(l.score * 100)}% of values match</span></span></label>`).join("")
+        : `<div class="why" style="margin-top:8px">We couldn't find anything linking this file to ${esc(label(ch.master))}. It will be loaded, but its rows won't be matched to anyone.</div>`}
+    </div>`).join("")}
+
+    <div class="step"><div class="n">4</div><div><h2>Fields to compare</h2><div class="sub">When a field appears in more than one file, we'll flag disagreements. Pick which file to trust for each.</div></div></div>
+    <div class="tbl"><table><tr><th></th><th>Field</th><th>Found in</th><th>Trust</th></tr>
+      ${ch.attributes.map((a, i) => { const ss = Object.keys(a.cols); return `<tr><td><input type="checkbox" data-ainc="${i}" ${a.include ? "checked" : ""}></td>
+        <td>${esc(attrName(a.name))}</td>
+        <td class="small">${ss.map(s => `${esc(label(s))}: <span class="muted">${esc(a.cols[s] === "_name" ? "name" : col(s, a.cols[s]))}</span>`).join("<br>")}</td>
+        <td>${ss.length > 1 ? `<select data-auth="${i}">${ss.map(s => `<option value="${s}" ${s === a.authority ? "selected" : ""}>${esc(label(s))}</option>`).join("")}</select>` : `<span class="faint small">only one file</span>`}</td></tr>`; }).join("")}
+    </table></div>
+
+    <div class="step"><div class="n">5</div><div><h2>Checks to run</h2><div class="sub">Suggested from your columns. Untick anything you don't need.</div></div></div>
+    <div class="choice">${ch.rules.length ? ch.rules.map((r, i) => {
+        const num = r.warn_days != null ? ["warn_days", r.warn_days] : r.max_age_days != null ? ["max_age_days", r.max_age_days] : null;
+        let text = esc(r.explain || r.id);
+        if (num) text = text.replace(`{${num[0]}}`, `<input type="number" data-rnum="${i}|${num[0]}" value="${num[1]}" style="width:70px;padding:1px 6px">`);
+        return `<label><input type="checkbox" data-rinc="${i}" ${r.include ? "checked" : ""}><span>${text}</span></label>`; }).join("")
+      : `<div class="why">No checks suggested. Field comparisons above still run.</div>`}</div>
+
+    <div class="sticky-save row"><button class="btn primary" id="ssave" style="padding:9px 18px">Save and build the source of truth</button>
+      <span class="muted small">You can change any of this later from "How it works".</span>
+      <span class="spacer"></span>${info.configured ? `<a id="scancel">Cancel</a>` : ""}</div>`;
+  }
+  $("#main").innerHTML = html;
+  $("#addsetup").onclick = () => setupUpload(info);
+  $("#main").querySelectorAll("[data-unstage]").forEach(b => b.onclick = async () => { SETUP = await post(`/api/w/${WS}/setup/remove/${encodeURIComponent(b.dataset.unstage)}`); renderSetup(info); });
+  if (!ch) return;
+  $("#smaster").onchange = async e => { toast("Re-checking links around the new master list…"); SETUP = await post(`/api/w/${WS}/setup/master`, {master: e.target.value}); renderSetup(info); };
+  $("#sent").oninput = e => ch.entity_label = e.target.value || "Record";
+  $("#skey").onchange = e => ch.key = e.target.value;
+  const q = sel => $("#main").querySelectorAll(sel);
+  q("[data-sinc]").forEach(x => x.onchange = () => ch.sources[x.dataset.sinc].include = x.checked);
+  q("[data-slabel]").forEach(x => x.oninput = () => ch.sources[x.dataset.slabel].label = x.value);
+  q("[data-link]").forEach(x => x.onchange = () => { const [sid, i] = x.dataset.link.split("|"); ch.sources[sid].links[+i].use = x.checked; });
+  q("[data-ainc]").forEach(x => x.onchange = () => ch.attributes[+x.dataset.ainc].include = x.checked);
+  q("[data-auth]").forEach(x => x.onchange = () => ch.attributes[+x.dataset.auth].authority = x.value);
+  q("[data-rinc]").forEach(x => x.onchange = () => ch.rules[+x.dataset.rinc].include = x.checked);
+  q("[data-rnum]").forEach(x => { x.onclick = e => e.preventDefault(); x.onchange = () => { const [i, k] = x.dataset.rnum.split("|"); ch.rules[+i][k] = +x.value; }; });
+  if ($("#scancel")) $("#scancel").onclick = () => go("");
+  $("#ssave").onclick = async () => {
+    $("#ssave").disabled = true; $("#ssave").textContent = "Building…";
+    try { await post(`/api/w/${WS}/setup/save`, {choices: ch}); CFG = null; toast("Saved. Here's what we found."); go(""); }
+    catch (err) { toast(esc(err.message)); $("#ssave").disabled = false; $("#ssave").textContent = "Save and build the source of truth"; }
+  };
+}
+
+/* ============================================================ generic cards (any industry) */
+function expCard(g, i) {
+  const c = g.counts;
+  return `<div class="card sum" data-open="exp" data-arg="${i}"><div class="label">${esc(g.label)}</div>
+    <div class="big" style="${c.expired ? "color:var(--red)" : ""}">${c.expired ? `${c.expired} expired` : c.soon ? `${c.soon} expiring` : "All current"}</div>
+    <div class="says">${c.expired ? `${c.soon ? `${c.soon} more expire` : "None others expire"} in the next ${g.warn_days} days.` : c.soon ? `Expiring in the next ${g.warn_days} days.` : "Nothing expired or close to it."}</div>
+    <div class="extra">${c.ok} fine</div><div class="go">See all dates →</div></div>`;
+}
+function totCard(g, i) {
+  return `<div class="card sum" data-open="tot" data-arg="${i}"><div class="label">${esc(g.label)}</div>
+    <div class="big">${g.mismatched ? g.mismatched : "All match"}${g.mismatched ? ` <span style="font-size:20px;color:var(--muted);font-weight:500">of ${g.total}</span>` : ""}</div>
+    <div class="says">${g.mismatched ? `don't match between ${esc(g.a_label)} and ${esc(g.b_label)}.` : `${esc(g.a_label)} and ${esc(g.b_label)} agree.`}</div>
+    <div class="go">See the totals →</div></div>`;
+}
+DRAWERS.exp = async (i) => {
+  const g = (await wapi("/views/expiring")).groups[+i || 0];
+  const sec = (st, title) => { const rows = g.rows.filter(r => r.status === st); return rows.length ? `<h3>${title} <span class="faint" style="font-weight:400">${rows.length}</span></h3>
+    <div class="tbl"><table><tr><th>${esc(S.entity_label)}</th><th>Date</th><th></th></tr>${rows.map(r => `<tr class="click" data-person="${esc(r.entity_key)}"><td>${esc(r.name)}</td>
+      <td>${esc(val(r.date))}${r.disputed ? ` <span class="tag red">systems disagree</span>` : ""}</td><td class="muted small">${r.days_left < 0 ? -r.days_left + " days ago" : "in " + r.days_left + " days"}</td></tr>`).join("")}</table></div>` : ""; };
+  openDrawer(`<h1>${esc(g.label)}</h1><div class="muted">Checked as of ${esc(val(S.as_of))}.</div>`,
+    sec("expired", "Expired") + sec("soon", `Within ${g.warn_days} days`) + sec("ok", "Fine"), () => DRAWERS.exp(i));
 };
+DRAWERS.tot = async (i) => {
+  const g = (await wapi("/views/totals")).groups[+i || 0];
+  const q = n => g.prefix + num(n) + g.unit;
+  openDrawer(`<h1>${esc(g.label)}</h1><div class="muted">Totals per ${esc(S.entity_label.toLowerCase())} and period. Rows that don't match are on your to-do list.</div>`,
+    `<div class="tbl"><table><tr><th>${esc(S.entity_label)}</th><th>Period</th><th>${esc(g.a_label)}</th><th>${esc(g.b_label)}</th><th></th></tr>
+      ${g.rows.map(r => `<tr class="click" data-person="${esc(r.entity_key)}"><td>${esc(r.name)}</td><td class="small">${shortDate(r.period_start)} – ${shortDate(r.period_end)}</td>
+        <td>${q(r.a)}</td><td>${q(r.b)}</td><td>${r.ok ? `<span class="tag green">Match</span>` : `<span class="tag amber">${r.diff > 0 ? "+" : "−"}${q(Math.abs(r.diff))}</span>`}</td></tr>`).join("")}</table></div>`,
+    () => DRAWERS.tot(i));
+};
+async function tableDrawer(name) {
+  const t = await wapi(`/tables/${encodeURIComponent(name)}?limit=200`);
+  openDrawer(`<h1 class="mono" style="font-size:20px">${esc(name)}</h1><div class="muted">First ${t.rows.length} rows. Read-only.</div>`,
+    `<div class="tbl"><table><tr>${t.columns.map(c => `<th>${esc(c)}</th>`).join("")}</tr>
+      ${t.rows.map(r => `<tr>${r.map(v => `<td class="small">${esc(v ?? "")}</td>`).join("")}</tr>`).join("")}</table></div>`);
+}
+
+/* ============================================================ learn from a decision */
+async function offerRule(id, action) {
+  let sim;
+  try { sim = await wapi(`/issues/${id}/similar`); }
+  catch (err) { toast("Rules aren't available yet. Restart the server and reload the page."); return; }
+  if (!sim.allowed) { toast(esc(sim.reason || "This issue can't be turned into a rule.")); return; }
+  const opts = sim.options;
+  if (!opts.length) return;
+  document.querySelectorAll(".offer").forEach(x => x.remove());
+  const el = document.createElement("div"); el.className = "offer";
+  el.innerHTML = `<h3>Handle similar issues the same way?</h3>
+    <div class="muted small">Save this as a rule. Matching issues, now and in future uploads, will be resolved automatically and marked with the rule. You can undo any of them.</div>
+    ${opts.map((o, k) => `<label><input type="radio" name="ruleopt" value="${k}" ${k === opts.length - 1 && o.condition ? "checked" : k === 0 ? "checked" : ""}>
+      <span>${esc(o.label)} <span class="faint">(${o.count ? o.count + " more open now" : "none open now, applies to future uploads"})</span></span></label>`).join("")}
+    <div class="row" style="margin-top:12px"><button class="btn primary small" id="mkrule">Make it a rule</button><button class="btn small quiet" id="norule">Just this one</button></div>`;
+  document.body.appendChild(el);
+  // prefer the narrowest suggestion (a condition) when one exists
+  let narrow = opts.findIndex(o => o.condition && o.count >= 1);
+  if (narrow < 0) narrow = opts.findIndex(o => o.count >= 1);
+  if (narrow >= 0) el.querySelectorAll("input")[narrow].checked = true;
+  el.querySelector("#norule").onclick = () => el.remove();
+  el.querySelector("#mkrule").onclick = async () => {
+    const k = +el.querySelector("input:checked").value;
+    el.querySelector("#mkrule").disabled = true;
+    const before = S.open_issues;
+    await wpost("/auto-rules", {issue_id: +id, condition: opts[k].condition, action, reviewer: reviewer || null});
+    el.remove(); await refresh();
+    toast(`Rule saved. ${Math.max(0, before - S.open_issues)} more issue(s) resolved automatically.`);
+  };
+}
 
 router();
 </script>
